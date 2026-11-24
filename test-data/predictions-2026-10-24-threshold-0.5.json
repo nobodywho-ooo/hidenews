@@ -1,0 +1,279 @@
+{
+  "snapshot": "front-page-2026-10-24.html",
+  "threshold": 0.5,
+  "promptName": "simple",
+  "model": "Laya-Q8_0",
+  "generated": "2026-11-24T16:45:33.720Z",
+  "stories": [
+    {
+      "id": "50223647",
+      "rank": 30,
+      "title": "Why is AI generated language so hard to understand?",
+      "url": "https://arxiv.org/abs/2610.29162",
+      "domain": "",
+      "p": 0.8903158538327234,
+      "hide": true
+    },
+    {
+      "id": "50171379",
+      "rank": 15,
+      "title": "A practical guide to AI image generation, from diffusion to agents",
+      "url": "https://danielball.com/notes/ai_image_generation.html",
+      "domain": "",
+      "p": 0.8384901728990585,
+      "hide": true
+    },
+    {
+      "id": "50222283",
+      "rank": 29,
+      "title": "Oai-math-revised: a community hub for revising OpenAI's math write-ups",
+      "url": "https://terrytao.wordpress.com/2026/10/24/oai-math-revised-a-community-hub-for-revising-openais-math-write-ups/",
+      "domain": "",
+      "p": 0.7518945662981078,
+      "hide": true
+    },
+    {
+      "id": "50224916",
+      "rank": 16,
+      "title": "Show HN: Steal My Bitcoin",
+      "url": "https://stealmybitcoin.com/",
+      "domain": "",
+      "p": 0.7070861672921138,
+      "hide": true
+    },
+    {
+      "id": "50192975",
+      "rank": 23,
+      "title": "TornadoVM 7 Enables GPU-Native Workloads from Java Applications",
+      "url": "https://www.infoq.com/news/2026/10/tornadovm-7-gpu/",
+      "domain": "",
+      "p": 0.6420117419132135,
+      "hide": true
+    },
+    {
+      "id": "50220913",
+      "rank": 26,
+      "title": "Elon Musk Just Gave Europe a Reason to Replace American Technology",
+      "url": "https://steveblank.com/2026/10/24/europe-gets-a-wake-up-call/",
+      "domain": "",
+      "p": 0.6410007610207997,
+      "hide": true
+    },
+    {
+      "id": "50217495",
+      "rank": 9,
+      "title": "Around a dozen banking apps began specifically permitting GrapheneOS",
+      "url": "https://grapheneos.social/@GrapheneOS/117492375462459244",
+      "domain": "",
+      "p": 0.5838358468209512,
+      "hide": true
+    },
+    {
+      "id": "50224463",
+      "rank": 19,
+      "title": "No signs of AI payoff outside the tech sector",
+      "url": "https://www.apollo.com/wealth/insights-news/insights/daily-spark/no-signs-of-ai-payoff-outside-the-tech-sector",
+      "domain": "",
+      "p": 0.531779436061793,
+      "hide": true
+    },
+    {
+      "id": "50222133",
+      "rank": 5,
+      "title": "FreeDNS",
+      "url": "https://freedns.afraid.org/",
+      "domain": "",
+      "p": 0.42644380794976766,
+      "hide": false
+    },
+    {
+      "id": "50218430",
+      "rank": 14,
+      "title": "OBS Studio 33",
+      "url": "https://github.com/obsproject/obs-studio/releases/tag/33.0.0",
+      "domain": "",
+      "p": 0.40377265035541343,
+      "hide": false
+    },
+    {
+      "id": "50222525",
+      "rank": 8,
+      "title": "Neural chip decodes interactions between brain regions",
+      "url": "https://actu.epfl.ch/news/neural-chip-decodes-interactions-between-brain-r-2/",
+      "domain": "",
+      "p": 0.3871496201050057,
+      "hide": false
+    },
+    {
+      "id": "50225695",
+      "rank": 1,
+      "title": "We should be more ambitious with the software we build",
+      "url": "https://danluu.com/ambitious/",
+      "domain": "",
+      "p": 0.3759197925927682,
+      "hide": false
+    },
+    {
+      "id": "50219177",
+      "rank": 4,
+      "title": "Broccoli2Shell: Brotli decoder RCE in Node.js, Python and more",
+      "url": "https://broccoli2shell.com/",
+      "domain": "",
+      "p": 0.32212524467052567,
+      "hide": false
+    },
+    {
+      "id": "50217946",
+      "rank": 28,
+      "title": "How Block Blast harvests its players for ad money",
+      "url": "https://ayoships.com/breakdowns/block-blast",
+      "domain": "",
+      "p": 0.29466545553851997,
+      "hide": false
+    },
+    {
+      "id": "50218195",
+      "rank": 10,
+      "title": "How close can pure functional programming get to C?",
+      "url": "https://rtfeldman.com/fp-vs-c",
+      "domain": "",
+      "p": 0.24236108520483912,
+      "hide": false
+    },
+    {
+      "id": "50194536",
+      "rank": 25,
+      "title": "How to run a city builder on 16 MHz",
+      "url": "https://larstofus.com/2025/11/16/how-to-run-a-city-builder-on-12-5-mhz/",
+      "domain": "",
+      "p": 0.22844318781668163,
+      "hide": false
+    },
+    {
+      "id": "50225663",
+      "rank": 17,
+      "title": "The Importance of Limitations for Creativity and Learning (2023)",
+      "url": "https://ratfactor.com/cards/limitations",
+      "domain": "",
+      "p": 0.2133123668309875,
+      "hide": false
+    },
+    {
+      "id": "50217903",
+      "rank": 21,
+      "title": "Apple Security Research Device",
+      "url": "https://security.apple.com/research-device/",
+      "domain": "",
+      "p": 0.1722774336695752,
+      "hide": false
+    },
+    {
+      "id": "50172432",
+      "rank": 18,
+      "title": "I Built a Stereo Vision Board for Hardware Hackers",
+      "url": "https://rootkitlabs.com/2026/10/06/i-built-a-stereo-vision-board-for-hardware-hackers/",
+      "domain": "",
+      "p": 0.1456897889605593,
+      "hide": false
+    },
+    {
+      "id": "50216791",
+      "rank": 27,
+      "title": "Evolving Threat: http2shell is an RCE in Node, Python, and more",
+      "url": "https://nitter.click/AikidoSecurity/status/2113759110625906950?__galadriel=lPmlGl9id4oAd5UeBwMhlYKArHyr6lR2IDGujPwB5HV2kQ1aLoPWFd5A9sGuzNcmrp8fUso8qygmHcKTDZ8MNHWqQ3bDJcycV87xp_0VypzQLYj6O_RRHlZuQqj33oASGY2YLSoAiMjeOZN40h7Stf8AG7DPrGZbAPVKUXy36HoMudRbvwF3_r2uYNmfJMhpKzywQDM6Ab8",
+      "domain": "",
+      "p": 0.1445117748413836,
+      "hide": false
+    },
+    {
+      "id": "50222622",
+      "rank": 12,
+      "title": "Roku developer repositories moved from GitHub to GitLab",
+      "url": "https://blog.roku.com/developer/gitlab-move",
+      "domain": "",
+      "p": 0.12397963268996459,
+      "hide": false
+    },
+    {
+      "id": "50172962",
+      "rank": 6,
+      "title": "Bringing uv and ty together",
+      "url": "https://astral.sh/blog/uv-ty-integration",
+      "domain": "",
+      "p": 0.11937940158119828,
+      "hide": false
+    },
+    {
+      "id": "50176544",
+      "rank": 20,
+      "title": "C vs. C#: racing VLC's Gaussian blur",
+      "url": "https://martinfinkel.com/blog/gaussian-blur-c-vs-csharp/",
+      "domain": "",
+      "p": 0.11490934779634988,
+      "hide": false
+    },
+    {
+      "id": "50219700",
+      "rank": 11,
+      "title": "GPU-unlock: FP/BF16 instruction issue rate on Nvidia 3000's cards",
+      "url": "https://github.com/Zagitta/gpu-unlock",
+      "domain": "",
+      "p": 0.11005855735967238,
+      "hide": false
+    },
+    {
+      "id": "50217500",
+      "rank": 7,
+      "title": "Twelve years of distributed SQLite",
+      "url": "https://philipotoole.com/twelve-years-of-distributed-sqlite/",
+      "domain": "",
+      "p": 0.09715139063844849,
+      "hide": false
+    },
+    {
+      "id": "50219666",
+      "rank": 2,
+      "title": "I don't understand quantum physics (2018)",
+      "url": "https://www.southampton.ac.uk/~doug/quantum_physics/index.html",
+      "domain": "",
+      "p": 0.08991399817098422,
+      "hide": false
+    },
+    {
+      "id": "50193677",
+      "rank": 22,
+      "title": "The Quake Fan who built the map editor everybody uses",
+      "url": "https://funcarena.com/articles/the-quake-fan-who-built-the-map-editor-everybody-uses",
+      "domain": "",
+      "p": 0.07849685814872864,
+      "hide": false
+    },
+    {
+      "id": "50168075",
+      "rank": 24,
+      "title": "Rise of collagen-eating microbes may help explain gaps in the fossil record",
+      "url": "https://www.cam.ac.uk/research/news/rise-of-collagen-eating-microbes-may-help-explain-gaps-in-the-fossil-record",
+      "domain": "",
+      "p": 0.07773274138886442,
+      "hide": false
+    },
+    {
+      "id": "50186450",
+      "rank": 3,
+      "title": "Physicists trap a single antimatter particle for a month",
+      "url": "https://www.scientificamerican.com/article/physicists-trap-a-single-antimatter-particle-for-a-month/",
+      "domain": "",
+      "p": 0.040798688836892485,
+      "hide": false
+    },
+    {
+      "id": "50222927",
+      "rank": 13,
+      "title": "The St. Helena 5 pence coin shows Jonathan, a roughly 190 year old tortoise",
+      "url": "https://de.numista.com/9866",
+      "domain": "",
+      "p": 0.020455418415760915,
+      "hide": false
+    }
+  ]
+}

@@ -34,9 +34,11 @@ async function classify(decision, story) {
   return res.answers.is_ai.noul;
 }
 
-const snapshotPath =
-  process.argv.slice(2).find((a) => !a.startsWith("--")) ??
-  "test-data/front-page-2026-11-24.html";
+const snapshotPath = process.argv.slice(2).find((a) => !a.startsWith("--"));
+if (!snapshotPath) {
+  console.error("usage: node tune/analyze.mjs <snapshot.html> [--threshold N] [--prompt=simple|verbose] [--update-suite]");
+  process.exit(1);
+}
 const thresholdArg = Number(
   process.argv.filter((a) => a.startsWith("--threshold="))[0]?.split("=")[1],
 );
