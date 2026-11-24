@@ -1,19 +1,9 @@
 {
   "snapshot": "front-page-2026-11-24.html",
   "threshold": 0.5,
-  "model": "Laya-Q8_0",
   "promptName": "simple",
-  "prompt": {
-    "is_ai": {
-      "type": "noul",
-      "instructions": "Is this story about AI or LLMs?",
-      "criteria": {
-        "true": "stories about AI, LLMs, ML systems, AI companies, agents, or models",
-        "false": "everything else"
-      }
-    }
-  },
-  "generated": "2026-11-24T16:34:00.740Z",
+  "model": "Laya-Q8_0",
+  "generated": "2026-11-24T16:37:56.764Z",
   "stories": [
     {
       "id": "50622934",
@@ -22,10 +12,7 @@
       "url": "https://qsantos.fr/2026/11/19/making-a-dumb-tv-just-smart-enough/",
       "domain": "",
       "p": 0.875947159490222,
-      "hide": true,
-      "golden": false,
-      "golden_source": "pi-seed",
-      "note": null
+      "hide": true
     },
     {
       "id": "50622854",
@@ -34,10 +21,7 @@
       "url": "https://davidtemkin.github.io/declarelang/",
       "domain": "",
       "p": 0.789103219096247,
-      "hide": true,
-      "golden": true,
-      "golden_source": "pi-seed",
-      "note": null
+      "hide": true
     },
     {
       "id": "50623515",
@@ -46,10 +30,7 @@
       "url": "https://salvageyarddrone.wordpress.com/",
       "domain": "",
       "p": 0.7367853916692655,
-      "hide": true,
-      "golden": false,
-      "golden_source": "pi-seed",
-      "note": null
+      "hide": true
     },
     {
       "id": "50614249",
@@ -58,10 +39,7 @@
       "url": "https://ladybird.org/posts/alpha/",
       "domain": "",
       "p": 0.7035711848115062,
-      "hide": true,
-      "golden": false,
-      "golden_source": "pi-seed",
-      "note": null
+      "hide": true
     },
     {
       "id": "50629231",
@@ -70,10 +48,7 @@
       "url": "https://github.com/sous-labs/songe",
       "domain": "",
       "p": 0.6309399806202519,
-      "hide": true,
-      "golden": true,
-      "golden_source": "pi-seed",
-      "note": null
+      "hide": true
     },
     {
       "id": "50630309",
@@ -82,10 +57,7 @@
       "url": "https://variety.com/2026/music/news/tidal-bans-ai-generated-music-1236956924/",
       "domain": "",
       "p": 0.4833611943545113,
-      "hide": false,
-      "golden": null,
-      "golden_source": "unset",
-      "note": "about AI-generated music \u2014 borderline, you decide"
+      "hide": false
     },
     {
       "id": "50619103",
@@ -94,10 +66,7 @@
       "url": "https://github.com/zed-industries/gpui",
       "domain": "",
       "p": 0.379939172991478,
-      "hide": false,
-      "golden": false,
-      "golden_source": "pi-seed",
-      "note": null
+      "hide": false
     },
     {
       "id": "50620349",
@@ -106,10 +75,7 @@
       "url": "https://stalw.art/blog/microsoft-exchange-replacement/",
       "domain": "",
       "p": 0.3758747565774411,
-      "hide": false,
-      "golden": false,
-      "golden_source": "pi-seed",
-      "note": null
+      "hide": false
     },
     {
       "id": "50625953",
@@ -118,10 +84,7 @@
       "url": "https://www.justafewbugs.xyz/",
       "domain": "",
       "p": 0.35973630403812495,
-      "hide": false,
-      "golden": false,
-      "golden_source": "pi-seed",
-      "note": "couldn't tell from title/URL"
+      "hide": false
     },
     {
       "id": "50627340",
@@ -130,10 +93,7 @@
       "url": "https://michaelharley.net/posts/2026/11/01/llm-agents-work-for-their-parent-companies-not-for-you/",
       "domain": "",
       "p": 0.33840297125907154,
-      "hide": false,
-      "golden": true,
-      "golden_source": "pi-seed",
-      "note": null
+      "hide": false
     },
     {
       "id": "50615308",
@@ -142,10 +102,7 @@
       "url": "https://twitter.com/ylecun/status/2124550037912920090",
       "domain": "",
       "p": 0.33265226319476543,
-      "hide": false,
-      "golden": true,
-      "golden_source": "pi-seed",
-      "note": null
+      "hide": false
     },
     {
       "id": "50605361",
@@ -154,10 +111,7 @@
       "url": "https://www.katelynlesse.com/blog/new-problems-for-engineers-to-solve",
       "domain": "",
       "p": 0.2954222847534801,
-      "hide": false,
-      "golden": true,
-      "golden_source": "pi-seed",
-      "note": null
+      "hide": false
     },
     {
       "id": "50619207",
@@ -166,10 +120,7 @@
       "url": "https://www.bored.com/",
       "domain": "",
       "p": 0.287170359780404,
-      "hide": false,
-      "golden": false,
-      "golden_source": "pi-seed",
-      "note": null
+      "hide": false
     },
     {
       "id": "50604710",
@@ -178,10 +129,7 @@
       "url": "https://blog.daniel-baumann.ch/posts/20261122-1.html",
       "domain": "",
       "p": 0.26608715462039184,
-      "hide": false,
-      "golden": false,
-      "golden_source": "pi-seed",
-      "note": null
+      "hide": false
     },
     {
       "id": "50598555",
@@ -190,10 +138,7 @@
       "url": "https://mechanical-pencil.com/products/spray-bottle",
       "domain": "",
       "p": 0.20118738490253307,
-      "hide": false,
-      "golden": false,
-      "golden_source": "pi-seed",
-      "note": null
+      "hide": false
     },
     {
       "id": "50606192",
@@ -202,10 +147,7 @@
       "url": "https://spelunkr.tv",
       "domain": "",
       "p": 0.18266064447417124,
-      "hide": false,
-      "golden": false,
-      "golden_source": "pi-seed",
-      "note": null
+      "hide": false
     },
     {
       "id": "50592307",
@@ -214,10 +156,7 @@
       "url": "https://www.usenix.org/conference/osdi26/presentation/ni",
       "domain": "",
       "p": 0.1589588051720656,
-      "hide": false,
-      "golden": false,
-      "golden_source": "pi-seed",
-      "note": null
+      "hide": false
     },
     {
       "id": "50624497",
@@ -226,10 +165,7 @@
       "url": "https://fzakaria.com/2026/11/23/2035-came-early",
       "domain": "",
       "p": 0.1333059525504762,
-      "hide": false,
-      "golden": false,
-      "golden_source": "pi-seed",
-      "note": null
+      "hide": false
     },
     {
       "id": "50599458",
@@ -238,10 +174,7 @@
       "url": "https://martincmartin.github.io/slidev-stem/watches/article/1/",
       "domain": "",
       "p": 0.13226942048177046,
-      "hide": false,
-      "golden": false,
-      "golden_source": "pi-seed",
-      "note": null
+      "hide": false
     },
     {
       "id": "50611576",
@@ -250,10 +183,7 @@
       "url": "https://www.cnbc.com/2026/11/23/nvidia-jensen-huang-ceo.html",
       "domain": "",
       "p": 0.12855549707719924,
-      "hide": false,
-      "golden": false,
-      "golden_source": "pi-seed",
-      "note": null
+      "hide": false
     },
     {
       "id": "50598094",
@@ -262,10 +192,7 @@
       "url": "https://www.vam.ac.uk/blog/museum-life/an-anti-slavery-sugar-bowl",
       "domain": "",
       "p": 0.12703546709270078,
-      "hide": false,
-      "golden": false,
-      "golden_source": "pi-seed",
-      "note": null
+      "hide": false
     },
     {
       "id": "50608343",
@@ -274,10 +201,7 @@
       "url": "https://dl.acm.org/doi/10.1145/3828523.3857112",
       "domain": "",
       "p": 0.11758736453052325,
-      "hide": false,
-      "golden": false,
-      "golden_source": "pi-seed",
-      "note": null
+      "hide": false
     },
     {
       "id": "50625384",
@@ -286,10 +210,7 @@
       "url": "https://quad9.net/news/blog/quad9-service-deactivation-in-france/",
       "domain": "",
       "p": 0.11603146185217184,
-      "hide": false,
-      "golden": false,
-      "golden_source": "pi-seed",
-      "note": null
+      "hide": false
     },
     {
       "id": "50622774",
@@ -298,10 +219,7 @@
       "url": "https://www.governor.ny.gov/news/money-your-pockets-governor-hochul-signs-bill-restricting-exploitative-vehicle-subscription",
       "domain": "",
       "p": 0.11411405301597556,
-      "hide": false,
-      "golden": false,
-      "golden_source": "pi-seed",
-      "note": null
+      "hide": false
     },
     {
       "id": "50624061",
@@ -310,22 +228,16 @@
       "url": "https://www.phoronix.com/review/amd-epyc-9006-7601",
       "domain": "",
       "p": 0.09291417484664512,
-      "hide": false,
-      "golden": false,
-      "golden_source": "pi-seed",
-      "note": null
+      "hide": false
     },
     {
       "id": "50604355",
       "rank": 5,
-      "title": "Tomato Fraud? When San Marzano Is \"San Marzano\" \u2013 Cinco Tomatos",
+      "title": "Tomato Fraud? When San Marzano Is \"San Marzano\" – Cinco Tomatos",
       "url": "https://slate.com/life/2026/11/cento-san-marzano-tomato-sauce-recipes-lawsuit.html",
       "domain": "",
       "p": 0.09214601739419721,
-      "hide": false,
-      "golden": false,
-      "golden_source": "pi-seed",
-      "note": null
+      "hide": false
     },
     {
       "id": "50622638",
@@ -334,10 +246,7 @@
       "url": "https://github.com/ItsNotRexed/Leonida/issues",
       "domain": "",
       "p": 0.08836488117756104,
-      "hide": false,
-      "golden": false,
-      "golden_source": "pi-seed",
-      "note": null
+      "hide": false
     },
     {
       "id": "50626413",
@@ -346,10 +255,7 @@
       "url": "https://fzakaria.com/2026/11/12/worshipping-at-the-altar-of-brendan-gregg",
       "domain": "",
       "p": 0.08444117684219474,
-      "hide": false,
-      "golden": false,
-      "golden_source": "pi-seed",
-      "note": null
+      "hide": false
     },
     {
       "id": "50626861",
@@ -358,22 +264,16 @@
       "url": "https://www.kadoa.com/congress/insights/trump-nvidia",
       "domain": "",
       "p": 0.05187450590771011,
-      "hide": false,
-      "golden": false,
-      "golden_source": "pi-seed",
-      "note": null
+      "hide": false
     },
     {
       "id": "50598679",
       "rank": 20,
-      "title": "Del Casher\u2013guitarist who was driving force behind the wah-wah pedal\u2013dies at 88",
+      "title": "Del Casher–guitarist who was driving force behind the wah-wah pedal–dies at 88",
       "url": "https://www.nytimes.com/2026/11/17/obituaries/del-casher-dead.html",
       "domain": "",
-      "p": 1.625325037727332e-05,
-      "hide": false,
-      "golden": false,
-      "golden_source": "pi-seed",
-      "note": null
+      "p": 0.00001625325037727332,
+      "hide": false
     }
   ]
 }
