@@ -4,13 +4,14 @@
 //   node tune/analyze.mjs <snapshot.html> [--threshold 0.5] [--prompt=simple|verbose] [--update-suite]
 //
 // - Parses an HN front-page snapshot, classifies every story with Laya.
-// - Loads the golden labels from test-suite/cases.tsv (see test-suite/README.md).
-// - `--update-suite` appends any new URLs to cases.json with expected `null`
+// - Loads the golden labels from the day's file test-suite/cases/<day>.json
+//   (see test-suite/README.md).
+// - `--update-suite` appends any new URLs to that file with expected `null`
 //   (existing cases keep their labels).
 // - Reports accuracy against the labelled cases and prints every mismatch.
 // - Writes model-only predictions to test-data/predictions-*.json.
 
-import { existsSync, readFileSync, writeFileSync } from "node:fs";
+import { readFileSync, writeFileSync } from "node:fs";
 import { basename, join } from "node:path";
 import { Decision } from "/Users/madsmtm/Desktop/work/nobodywho/nobodywho/js/dist/index.mjs";
 import {
@@ -18,57 +19,10 @@ import {
   HIDE_AI_PROMPT_SIMPLE,
   HIDE_AI_PROMPT_VERBOSE,
 } from "./prompt.mjs";
+import { loadSuite, parseStories, suitePathFor, updateSuite } from "./suite.mjs";
 
 const MODEL = "/Users/madsmtm/Desktop/work/models/Laya-Q8_0.gguf";
-const SUITE = "test-suite/cases.json";
 const PROMPTS = { simple: HIDE_AI_PROMPT_SIMPLE, verbose: HIDE_AI_PROMPT_VERBOSE };
-
-// --- test-suite handling ---
-
-function loadSuite() {
-  if (!existsSync(SUITE)) return new Map();
-  const cases = JSON.parse(readFileSync(SUITE, "utf8"));
-  return new Map(cases.map((c) => [c.url, c]));
-}
-
-function updateSuite(cases, stories) {
-  let added = 0;
-  for (const s of stories) {
-    if (!cases.has(s.url)) {
-      cases.set(s.url, {
-        url: s.url,
-        title: s.title,
-        expected: null,
-      });
-      added++;
-    }
-  }
-  const rows = [...cases.values()].sort((a, b) => a.url.localeCompare(b.url));
-  writeFileSync(SUITE, JSON.stringify(rows, null, 2) + "\n");
-  console.log(`test-suite: ${rows.length} cases (${added} added)`);
-}
-
-// --- HTML parsing (2026 HN markup: <tr class="athing submission"> + subline) ---
-
-function parseStories(html) {
-  const stories = [];
-  const rowRe = /<tr class="athing submission" id="(\d+)">([\s\S]*?)<\/tr>/g;
-  for (const m of html.matchAll(rowRe)) {
-    const id = m[1];
-    const row = m[2];
-    const rank = Number(row.match(/class="rank">(\d+)\.?<\/span>/)?.[1] ?? 0);
-    const titleM = row.match(
-      /class="titleline"><a[^>]*href="([^"]*)"[^>]*>([\s\S]*?)<\/a>/,
-    );
-    const url = titleM?.[1] ?? "";
-    const title =
-      titleM?.[2]?.replace(/<[^>]+>/g, "")?.replace(/&#x27;/g, "'")?.replace(/&quot;/g, '"')?.replace(/&#x2F;/g, "/")?.replace(/&amp;/g, "&") ?? "";
-    const domainM = row.match(/class="sitestr">([^<]+)<\/a>/);
-    const domain = domainM?.[1] ?? "";
-    stories.push({ id, rank, title, url, domain });
-  }
-  return stories;
-}
 
 // --- classification ---
 
@@ -94,8 +48,12 @@ const html = readFileSync(snapshotPath, "utf8");
 const stories = parseStories(html);
 console.log(`Parsed ${stories.length} stories from ${basename(snapshotPath)}`);
 
-const cases = loadSuite();
-if (process.argv.includes("--update-suite")) updateSuite(cases, stories);
+const suitePath = suitePathFor(snapshotPath);
+const cases = loadSuite(suitePath);
+if (process.argv.includes("--update-suite")) {
+  const { total, added } = updateSuite(suitePath, stories);
+  console.log(`test-suite: ${total} cases (${added} added)`);
+}
 
 const decision = await Decision.fromPath({ modelPath: MODEL });
 const results = [];
