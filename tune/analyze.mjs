@@ -5,7 +5,7 @@
 //
 // - Parses an HN front-page snapshot, classifies every story with Laya.
 // - Loads the golden labels from test-suite/cases.tsv (see test-suite/README.md).
-// - `--update-suite` appends any new URLs to cases.tsv with expected `?`
+// - `--update-suite` appends any new URLs to cases.json with expected `null`
 //   (existing cases keep their labels).
 // - Reports accuracy against the labelled cases and prints every mismatch.
 // - Writes model-only predictions to test-data/predictions-*.json.
@@ -20,21 +20,15 @@ import {
 } from "./prompt.mjs";
 
 const MODEL = "/Users/madsmtm/Desktop/work/models/Laya-Q8_0.gguf";
-const SUITE = "test-suite/cases.tsv";
+const SUITE = "test-suite/cases.json";
 const PROMPTS = { simple: HIDE_AI_PROMPT_SIMPLE, verbose: HIDE_AI_PROMPT_VERBOSE };
 
 // --- test-suite handling ---
 
 function loadSuite() {
   if (!existsSync(SUITE)) return new Map();
-  const cases = new Map();
-  for (const line of readFileSync(SUITE, "utf8").split("\n")) {
-    const t = line.trim();
-    if (!t || t.startsWith("#")) continue;
-    const [date, rank, url, title, expected, ...note] = t.split("\t");
-    cases.set(url, { date, rank, url, title, expected, note: note.join("\t") });
-  }
-  return cases;
+  const cases = JSON.parse(readFileSync(SUITE, "utf8"));
+  return new Map(cases.map((c) => [c.url, c]));
 }
 
 function updateSuite(cases, stories) {
@@ -42,32 +36,15 @@ function updateSuite(cases, stories) {
   for (const s of stories) {
     if (!cases.has(s.url)) {
       cases.set(s.url, {
-        date: new Date().toISOString().slice(0, 10),
-        rank: String(s.rank),
         url: s.url,
         title: s.title,
-        expected: "?",
-        note: "",
+        expected: null,
       });
       added++;
     }
   }
-  const header = [
-    "# Hacker News AI-filter test suite",
-    "# Columns: date, rank, url, title, expected (ai | not-ai | ?), note",
-    "",
-  ];
-  const rows = [...cases.values()].sort(
-    (a, b) => a.date.localeCompare(b.date) || Number(a.rank) - Number(b.rank),
-  );
-  const out = header.concat(
-    rows.map((c) =>
-      [c.date, c.rank, c.url, c.title, c.expected, c.note]
-        .join("\t")
-        .replace(/\t+$/, ""),
-    ),
-  );
-  writeFileSync(SUITE, out.join("\n") + "\n");
+  const rows = [...cases.values()].sort((a, b) => a.url.localeCompare(b.url));
+  writeFileSync(SUITE, JSON.stringify(rows, null, 2) + "\n");
   console.log(`test-suite: ${rows.length} cases (${added} added)`);
 }
 
@@ -103,7 +80,9 @@ async function classify(decision, story) {
   return res.answers.is_ai.noul;
 }
 
-const snapshotPath = process.argv[2] ?? "test-data/front-page-2026-11-24.html";
+const snapshotPath =
+  process.argv.slice(2).find((a) => !a.startsWith("--")) ??
+  "test-data/front-page-2026-11-24.html";
 const thresholdArg = Number(
   process.argv.filter((a) => a.startsWith("--threshold="))[0]?.split("=")[1],
 );
@@ -141,7 +120,7 @@ let tp = 0, fp = 0, fn = 0, tn = 0;
 const mismatches = [];
 for (const r of results) {
   const c = cases.get(r.url);
-  if (!c || c.expected === "?") continue;
+  if (!c || c.expected == null) continue;
   const want = c.expected === "ai";
   if (want && r.hide) tp++;
   else if (!want && r.hide) fp++;
