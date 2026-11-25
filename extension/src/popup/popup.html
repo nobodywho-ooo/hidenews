@@ -1,0 +1,35 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <link rel="stylesheet" href="./popup.css" />
+  </head>
+  <body>
+    <h1>hidenews</h1>
+
+    <section class="mode">
+      <label>
+        <input type="radio" name="mode" value="hide-ai" id="mode-hide" />
+        <span>Hide AI stories</span>
+      </label>
+      <label>
+        <input type="radio" name="mode" value="only-ai" id="mode-only" />
+        <span>Only show AI stories</span>
+      </label>
+    </section>
+
+    <section class="threshold">
+      <label for="threshold">AI cutoff — <span id="thrLabel">0.50</span></label>
+      <input type="range" id="threshold" min="0.1" max="0.9" step="0.05" value="0.5" />
+      <div class="scale"><span>strict</span><span>loose</span></div>
+    </section>
+
+    <section class="model">
+      <div class="status" id="modelStatus">checking model…</div>
+      <div class="progress"><div class="bar" id="modelBar"></div></div>
+    </section>
+
+    <footer><small>Model: Laya-Q8_0, runs fully on-device.</small></footer>
+    <script type="module" src="./popup.js"></script>
+  </body>
+</html>

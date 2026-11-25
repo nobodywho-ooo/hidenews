@@ -1,0 +1,44 @@
+:root {
+  color-scheme: light dark;
+  --fg: #333;
+  --muted: #777;
+}
+* { box-sizing: border-box; }
+body {
+  width: 260px;
+  margin: 0;
+  padding: 14px;
+  font: 13px/1.4 -apple-system, system-ui, sans-serif;
+  color: var(--fg);
+}
+h1 { font-size: 15px; margin: 0 0 12px; }
+section { margin: 12px 0; }
+.mode label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 0;
+  cursor: pointer;
+}
+.threshold label { font-weight: 600; }
+input[type="range"] { width: 100%; margin-top: 6px; }
+.scale {
+  display: flex;
+  justify-content: space-between;
+  font-size: 11px;
+  color: var(--muted);
+}
+.model .status { font-size: 12px; min-height: 16px; }
+.model .status.ok { color: #1a8a4a; }
+.model .status.busy { color: #946300; }
+.model .status.err { color: #b00020; }
+.progress {
+  height: 6px;
+  background: #e4e4e4;
+  border-radius: 3px;
+  margin-top: 6px;
+  overflow: hidden;
+}
+.bar { height: 100%; width: 0%; background: #1a8a4a; transition: width 0.2s; }
+.bar.active { background: #d08900; }
+footer { margin-top: 12px; color: var(--muted); font-size: 11px; }
