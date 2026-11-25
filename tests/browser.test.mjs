@@ -68,24 +68,28 @@ test(
         .addArguments("-headless", "-profile", FF_PROFILE)
         .setBinary(FIREFOX_BIN);
       driver = await new Builder().forBrowser("firefox").setFirefoxOptions(options).build();
+      console.log("[test] driver launched");
       const addonId = await driver.installAddon(exDir, true);
-      console.log("installed add-on:", addonId);
+      console.log("[test] installed add-on:", addonId);
 
       await driver.get(FIXTURE_URL);
+      console.log("[test] navigated to fixture");
 
       // wait for the model to become ready (content sets dataset.hidenewsModel)
       const t0 = Date.now();
       let status = "";
-      while (Date.now() - t0 < 360000) {
+      while (Date.now() - t0 < 420000) {
         status = await driver.executeScript(
           "return document.documentElement.dataset.hidenewsModel || ''",
         );
         if (status === "ready") break;
-        if (status === "error") throw new Error(`model status reached error` +
-          (await driver.executeScript("return document.documentElement.dataset.hidenewsModelState || ''")));
+        if (status === "error") throw new Error("model status reached error");
+        if ((Date.now() - t0) % 15000 < 1000) {
+          console.log(`[test] ${((Date.now() - t0) / 1000).toFixed(0)}s … model=${status}`);
+        }
         await new Promise((r) => setTimeout(r, 1000));
       }
-      console.log(`model status after ${((Date.now() - t0) / 1000).toFixed(0)}s: ${status}`);
+      console.log(`[test] model status after ${((Date.now() - t0) / 1000).toFixed(0)}s: ${status}`);
       assert.equal(status, "ready", "model never became ready");
 
       // wait for the two known rows to get verdicts

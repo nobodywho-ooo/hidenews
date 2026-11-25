@@ -52,17 +52,18 @@ let queue: Promise<unknown> = Promise.resolve();
 
 self.onmessage = (e: any) => {
   const msg = e.data;
-  if (msg?.kind === "init") {
-    loadModel();
-    return;
-  }
-  if (msg?.kind === "classify") {
-    queue = queue
-      .then(() => classify(msg.id, msg.title))
-      .then((v) => post({ kind: "verdict", id: v.id, p: v.p }))
-      .catch((err) => post({ kind: "status", text: `classify #${msg.id} failed: ${err}` }));
+  if (msg?.kind === "init" || msg?.kind === "classify") {
+    loadModel(); // idempotent — ensures the model is loading regardless
+    if (msg?.kind === "classify") {
+      queue = queue
+        .then(() => classify(msg.id, msg.title))
+        .then((v) => post({ kind: "verdict", id: v.id, p: v.p }))
+        .catch((err) => post({ kind: "status", text: `classify #${msg.id} failed: ${err}` }));
+    }
   }
 };
 
-// start eagerly once created by the background
-post({ kind: "status", text: "host worker started" });
+// Eagerly start loading the model. Messages posted before this module finished
+// its top-level `await` (instantiating nobodywho's wasm) are dropped, so the
+// model must NOT depend on receiving an "init" message.
+loadModel();

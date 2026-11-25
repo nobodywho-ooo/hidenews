@@ -167,20 +167,30 @@ function classifyRow(s: { id: string; title: string }) {
   if (inflight.has(s.id)) return; // already asked for this one
   inflight.add(s.id);
   markPending(s.id);
-  // Fire-and-forget, but keep re-sending until a verdict lands. This handles
-  // the case where the page was opened before the model finished downloading:
-  // the background creates/keeps the worker on every classify, and once ready
-  // it starts answering these re-sends.
+  const storageKey = "v:" + s.id;
+  // Fire-and-forget classify + periodic re-check until a verdict resolves.
+  // The background answers repeats from its cache (it never re-infers), and we
+  // also read the persisted cache directly so a missed broadcast can't keep a
+  // row pending forever.
+  const act = () => {
+    if (verdicts.has(s.id)) return;
+    try {
+      chrome.storage.local.get([storageKey], (v: any) => {
+        if (typeof v?.[storageKey] === "number") onVerdict(s.id, v[storageKey]);
+      });
+    } catch {}
+    safeSend({ kind: "classify", id: s.id, title: s.title });
+  };
+  act();
   let tries = 0;
   const iv = setInterval(() => {
-    if (verdicts.has(s.id) || ++tries > 60) {
+    if (verdicts.has(s.id) || ++tries > 40) {
       clearInterval(iv);
       inflight.delete(s.id);
       return;
     }
-    safeSend({ kind: "classify", id: s.id, title: s.title });
+    act();
   }, 10000);
-  safeSend({ kind: "classify", id: s.id, title: s.title });
 }
 
 function classifyAll() {

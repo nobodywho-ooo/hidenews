@@ -11,6 +11,13 @@ const WORKER_URL = "dist/host-worker.js";
 let worker: Worker | null = null;
 let modelStatus: Record<string, unknown> = { status: "idle" };
 
+// Dedupe: classify a given story id at most once. Because content scripts may
+// re-send (and a given id can be pending in several scripts), we cache the
+// verdict and answer repeats without running inference again.
+const verdictCache = new Map<string, number>();
+const inferring = new Set<string>();
+const CACHE_MAX = 3000;
+
 function persistStatus() {
   try {
     chrome.storage?.local?.set({
@@ -58,6 +65,12 @@ function onWorkerMessage(msg: any) {
     persistStatus();
     safeSend({ kind: "model-status", ...msg });
   } else if (msg.kind === "verdict") {
+    verdictCache.set(msg.id, msg.p);
+    inferring.delete(msg.id);
+    // persist so content scripts can resolve even if they miss the broadcast
+    try {
+      chrome.storage?.local?.set({ [`v:${msg.id}`]: msg.p }, () => pruneCache());
+    } catch {}
     tally(msg.id, msg.p);
     safeSend({ kind: "verdict", id: msg.id, p: msg.p });
   } else if (msg.kind === "status") {
@@ -65,10 +78,34 @@ function onWorkerMessage(msg: any) {
   }
 }
 
+function pruneCache() {
+  try {
+    chrome.storage.local.get(null, (all: any) => {
+      const keys = Object.keys(all).filter((k) => k.startsWith("v:"));
+      if (keys.length > CACHE_MAX) {
+        chrome.storage.local.remove(keys.slice(0, keys.length - CACHE_MAX));
+      }
+    });
+  } catch {}
+}
+
 chrome.runtime.onMessage.addListener((msg: any, _sender: unknown, sendResponse: (v?: unknown) => void) => {
   if (msg?.kind === "classify") {
-    const w = ensureWorker();
-    if (w) w.postMessage({ kind: "classify", id: msg.id, title: msg.title });
+    if (verdictCache.has(msg.id)) {
+      // already classified this story — answer from cache, don't re-infer
+      safeSend({ kind: "verdict", id: msg.id, p: verdictCache.get(msg.id)! });
+    } else if (inferring.has(msg.id)) {
+      // a previous classify for this id is already being worked — do nothing
+    } else {
+      inferring.add(msg.id);
+      const w = ensureWorker();
+      if (w) w.postMessage({ kind: "classify", id: msg.id, title: msg.title });
+      else {
+        inferring.delete(msg.id);
+        modelStatus = { status: "error", message: "worker unavailable" };
+        persistStatus();
+      }
+    }
   } else if (msg?.kind === "get-status") {
     sendResponse({
       status: modelStatus.status,
