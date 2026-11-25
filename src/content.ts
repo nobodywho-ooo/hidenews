@@ -96,12 +96,20 @@ function markPending(id: string) {
   }
 }
 
-// ---- session cache ----
+// ---- verdict cache ----
+// storage.session is ideal (per-session, isn't), but Firefox may not expose it;
+// fall back to storage.local so reloads are instant everywhere.
+const CACHE_MAX = 2000; // bound storage.local growth
+
+function storeArea() {
+  if (chrome.storage?.session) return chrome.storage.session;
+  return chrome.storage?.local;
+}
 function cacheKey(id: string) {
   return `v:${id}`;
 }
 async function loadCached() {
-  const s = chrome.storage?.session;
+  const s = storeArea();
   if (!s) return;
   try {
     const all = await s.get(null);
@@ -112,12 +120,20 @@ async function loadCached() {
 }
 function rememberVerdict(id: string, p: number) {
   verdicts.set(id, p);
-  const s = chrome.storage?.session;
-  if (s) {
-    try {
-      s.set({ [cacheKey(id)]: p });
-    } catch {}
-  }
+  const s = storeArea();
+  if (!s) return;
+  try {
+    s.set({ [cacheKey(id)]: p });
+    // bound growth when persisting to storage.local
+    if (!chrome.storage.session) {
+      s.get(null, (all: any) => {
+        const vkeys = Object.keys(all).filter((k) => k.startsWith("v:"));
+        if (vkeys.length > CACHE_MAX) {
+          s.remove(vkeys.slice(0, vkeys.length - CACHE_MAX));
+        }
+      });
+    }
+  } catch {}
 }
 
 // ---- observable status (debug badge + console) ----
