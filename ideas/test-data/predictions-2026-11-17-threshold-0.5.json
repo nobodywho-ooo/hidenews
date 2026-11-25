@@ -1,0 +1,279 @@
+{
+  "snapshot": "front-page-2026-11-17.html",
+  "threshold": 0.5,
+  "promptName": "simple",
+  "model": "Laya-Q8_0",
+  "generated": "2026-11-24T16:45:56.249Z",
+  "stories": [
+    {
+      "id": "50538303",
+      "rank": 17,
+      "title": "Harvard researchers find AI coding agents shifted the bottleneck to code review",
+      "url": "https://complexdiscovery.com/harvard-researchers-find-ai-coding-agents-shifted-the-bottleneck-to-code-review/",
+      "domain": "",
+      "p": 0.9155983299099671,
+      "hide": true
+    },
+    {
+      "id": "50535230",
+      "rank": 1,
+      "title": "GPT‑6.2 Astra and Sol",
+      "url": "https://openai.com/index/introducing-gpt-6-2-astra-sol/",
+      "domain": "",
+      "p": 0.8931218998480247,
+      "hide": true
+    },
+    {
+      "id": "50526560",
+      "rank": 21,
+      "title": "If an App Asks for Full Disk Access or System and App Protection Override",
+      "url": "https://support.apple.com/en-us/149699",
+      "domain": "",
+      "p": 0.7603498758955045,
+      "hide": true
+    },
+    {
+      "id": "50535208",
+      "rank": 29,
+      "title": "Who Builds the Machines That Build the Machines?",
+      "url": "https://read.corematter.com/p/section-232-us-machine-tools",
+      "domain": "",
+      "p": 0.7168734295185817,
+      "hide": true
+    },
+    {
+      "id": "50532191",
+      "rank": 8,
+      "title": "What is the best harness for each model?",
+      "url": "https://runta.com/blog/introducing-frontierharness-eval-v1-1/",
+      "domain": "",
+      "p": 0.42030797152019844,
+      "hide": false
+    },
+    {
+      "id": "50512779",
+      "rank": 28,
+      "title": "Nimony: A New Compiler for Nim",
+      "url": "https://nimony.org/",
+      "domain": "",
+      "p": 0.418238868052335,
+      "hide": false
+    },
+    {
+      "id": "50536468",
+      "rank": 23,
+      "title": "Launch HN: StarSling (YC P25) – Self-improving CI for agent-volume repos",
+      "url": "item?id=50536468",
+      "domain": "",
+      "p": 0.38189922183145997,
+      "hide": false
+    },
+    {
+      "id": "50535885",
+      "rank": 11,
+      "title": "MAI Code 2 and Code 2 Flash",
+      "url": "https://microsoft.ai/news/introducing-mai-code-2-and-mai-code-2-flash/",
+      "domain": "",
+      "p": 0.3678328725740026,
+      "hide": false
+    },
+    {
+      "id": "50530163",
+      "rank": 2,
+      "title": "New Evidence Shows School Phone Bans Are Gradually Improving Test Scores",
+      "url": "https://www.nytimes.com/2026/11/17/upshot/school-phone-bans-study-scores.html",
+      "domain": "",
+      "p": 0.30708373479510903,
+      "hide": false
+    },
+    {
+      "id": "50534631",
+      "rank": 4,
+      "title": "Nvidia stopped disclosing Singapore sales as revenues hit $104B",
+      "url": "https://www.ft.com/content/dbde7a30-548c-4f9d-a4be-7898a0c24dcf",
+      "domain": "",
+      "p": 0.24821306457391865,
+      "hide": false
+    },
+    {
+      "id": "50497621",
+      "rank": 22,
+      "title": "Formal Verification Is Not Verifiable",
+      "url": "https://alperenkeles.com/posts/formal-verification-is-not-verifiable/",
+      "domain": "",
+      "p": 0.24409553795428404,
+      "hide": false
+    },
+    {
+      "id": "50538184",
+      "rank": 27,
+      "title": "Tencent Hy4 Flash",
+      "url": "https://hy.tencent.ai/research/hy4-flash",
+      "domain": "",
+      "p": 0.24157556996286783,
+      "hide": false
+    },
+    {
+      "id": "50538240",
+      "rank": 3,
+      "title": "Java4Shell: RCE in OpenJDK when processing Base64",
+      "url": "https://calif.io/java4shell/",
+      "domain": "",
+      "p": 0.21432940280327487,
+      "hide": false
+    },
+    {
+      "id": "50516689",
+      "rank": 24,
+      "title": "Do Repeat Yourself",
+      "url": "https://arcentry.com/blog/do-repeat-yourself/",
+      "domain": "",
+      "p": 0.18335783341320896,
+      "hide": false
+    },
+    {
+      "id": "50524767",
+      "rank": 5,
+      "title": "Optimizely compromised, served malware on Zoom, GitLab",
+      "url": "https://blog.report-uri.com/worlds-largest-brands-infected-with-malware-via-optimizely/",
+      "domain": "",
+      "p": 0.1753294805064298,
+      "hide": false
+    },
+    {
+      "id": "50537290",
+      "rank": 25,
+      "title": "Web Browser Engineering (2021)",
+      "url": "https://browser.engineering/",
+      "domain": "",
+      "p": 0.17192861461582962,
+      "hide": false
+    },
+    {
+      "id": "50536387",
+      "rank": 16,
+      "title": "Solid 2.0",
+      "url": "https://www.solidjs.com/blog/solid-2-0-the-long-hold/",
+      "domain": "",
+      "p": 0.1668551749435897,
+      "hide": false
+    },
+    {
+      "id": "50537156",
+      "rank": 15,
+      "title": "jQuery 4.1.0",
+      "url": "https://github.com/jquery/jquery/releases/tag/4.1.0",
+      "domain": "",
+      "p": 0.16476128567663292,
+      "hide": false
+    },
+    {
+      "id": "50529612",
+      "rank": 18,
+      "title": "How the Claude Code team thinks about verification",
+      "url": "https://claude.dev/blog/how-the-claude-code-team-thinks-about-verification/",
+      "domain": "",
+      "p": 0.15695731863317777,
+      "hide": false
+    },
+    {
+      "id": "50524736",
+      "rank": 12,
+      "title": "Windows 11 is collecting data on which coding agents and developer tools you use",
+      "url": "https://xusheng.dev/posts/windows-coding-agent-telemetry/",
+      "domain": "",
+      "p": 0.14832050434848262,
+      "hide": false
+    },
+    {
+      "id": "50535992",
+      "rank": 9,
+      "title": "Phrack 73",
+      "url": "https://phrack.org/issues/73/introduction_md",
+      "domain": "",
+      "p": 0.142312673724053,
+      "hide": false
+    },
+    {
+      "id": "50535238",
+      "rank": 14,
+      "title": "Apple Services Down",
+      "url": "https://developer.apple.com/system-status/",
+      "domain": "",
+      "p": 0.13819633606171453,
+      "hide": false
+    },
+    {
+      "id": "50511874",
+      "rank": 26,
+      "title": "VisualBasic.World: A gallery of Planet Source Code programs from 1997 to 2012",
+      "url": "https://visualbasic.world/",
+      "domain": "",
+      "p": 0.13753091237494006,
+      "hide": false
+    },
+    {
+      "id": "50532385",
+      "rank": 30,
+      "title": "Show HN: Alloy CSS, dialogs, menus and tabs that work with JavaScript off",
+      "url": "https://alloyhtml.com/example.html",
+      "domain": "",
+      "p": 0.11368041261461416,
+      "hide": false
+    },
+    {
+      "id": "50538994",
+      "rank": 7,
+      "title": "Quad9's withdrawal from France: A canary in the coal mine",
+      "url": "https://blog.cloudflare.com/quad9-withdrawal-from-france/",
+      "domain": "",
+      "p": 0.11259906113257298,
+      "hide": false
+    },
+    {
+      "id": "50522643",
+      "rank": 13,
+      "title": "Chemistry is Actually Geometry",
+      "url": "https://chillphysicsenjoyer.substack.com/p/chemistry-is-actually-geometry",
+      "domain": "",
+      "p": 0.09642039424001955,
+      "hide": false
+    },
+    {
+      "id": "50523025",
+      "rank": 19,
+      "title": "Comcast's \"fiber-powered Wi-Fi\" is cable, AT&T says in false advertising case",
+      "url": "https://arstechnica.com/tech-policy/2026/11/comcast-falsely-advertises-cable-internet-as-fiber-powered-att-lawsuit-says/",
+      "domain": "",
+      "p": 0.06920018663740646,
+      "hide": false
+    },
+    {
+      "id": "50525575",
+      "rank": 20,
+      "title": "Why 3dfx 1 cards had such a washed out color output?",
+      "url": "https://twitter.com/id_aa_carmack/status/2122478083319992513",
+      "domain": "",
+      "p": 0.05876804549795583,
+      "hide": false
+    },
+    {
+      "id": "50536813",
+      "rank": 10,
+      "title": "350 years ago, Ole Rømer discovered that light has a finite speed",
+      "url": "https://www.sciencenorway.no/culture-history-history-of-science/350-years-ago-this-man-discovered-that-light-has-a-finite-speed/2737969",
+      "domain": "",
+      "p": 0.026502205255200233,
+      "hide": false
+    },
+    {
+      "id": "50532849",
+      "rank": 6,
+      "title": "Highly classified US national security communications network goes down",
+      "url": "https://www.cnn.com/2026/11/17/politics/highly-classified-national-security-communications-network-goes-down",
+      "domain": "",
+      "p": 0.02096091820326457,
+      "hide": false
+    }
+  ]
+}

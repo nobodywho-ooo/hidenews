@@ -1,0 +1,152 @@
+[
+  {
+    "url": "https://danluu.com/ambitious/",
+    "title": "We should be more ambitious with the software we build",
+    "expected": "not-ai"
+  },
+  {
+    "url": "https://www.southampton.ac.uk/~doug/quantum_physics/index.html",
+    "title": "I don't understand quantum physics (2018)",
+    "expected": "not-ai"
+  },
+  {
+    "url": "https://www.scientificamerican.com/article/physicists-trap-a-single-antimatter-particle-for-a-month/",
+    "title": "Physicists trap a single antimatter particle for a month",
+    "expected": "not-ai"
+  },
+  {
+    "url": "https://broccoli2shell.com/",
+    "title": "Broccoli2Shell: Brotli decoder RCE in Node.js, Python and more",
+    "expected": "not-ai"
+  },
+  {
+    "url": "https://freedns.afraid.org/",
+    "title": "FreeDNS",
+    "expected": "not-ai"
+  },
+  {
+    "url": "https://astral.sh/blog/uv-ty-integration",
+    "title": "Bringing uv and ty together",
+    "expected": "not-ai"
+  },
+  {
+    "url": "https://philipotoole.com/twelve-years-of-distributed-sqlite/",
+    "title": "Twelve years of distributed SQLite",
+    "expected": "not-ai"
+  },
+  {
+    "url": "https://actu.epfl.ch/news/neural-chip-decodes-interactions-between-brain-r-2/",
+    "title": "Neural chip decodes interactions between brain regions",
+    "expected": "not-ai"
+  },
+  {
+    "url": "https://grapheneos.social/@GrapheneOS/117492375462459244",
+    "title": "Around a dozen banking apps began specifically permitting GrapheneOS",
+    "expected": "not-ai"
+  },
+  {
+    "url": "https://rtfeldman.com/fp-vs-c",
+    "title": "How close can pure functional programming get to C?",
+    "expected": "not-ai"
+  },
+  {
+    "url": "https://github.com/Zagitta/gpu-unlock",
+    "title": "GPU-unlock: FP/BF16 instruction issue rate on Nvidia 3000's cards",
+    "expected": "ai"
+  },
+  {
+    "url": "https://blog.roku.com/developer/gitlab-move",
+    "title": "Roku developer repositories moved from GitHub to GitLab",
+    "expected": "not-ai"
+  },
+  {
+    "url": "https://de.numista.com/9866",
+    "title": "The St. Helena 5 pence coin shows Jonathan, a roughly 190 year old tortoise",
+    "expected": "not-ai"
+  },
+  {
+    "url": "https://github.com/obsproject/obs-studio/releases/tag/33.0.0",
+    "title": "OBS Studio 33",
+    "expected": "not-ai"
+  },
+  {
+    "url": "https://danielball.com/notes/ai_image_generation.html",
+    "title": "A practical guide to AI image generation, from diffusion to agents",
+    "expected": "ai"
+  },
+  {
+    "url": "https://stealmybitcoin.com/",
+    "title": "Show HN: Steal My Bitcoin",
+    "expected": "not-ai"
+  },
+  {
+    "url": "https://ratfactor.com/cards/limitations",
+    "title": "The Importance of Limitations for Creativity and Learning (2023)",
+    "expected": "not-ai"
+  },
+  {
+    "url": "https://rootkitlabs.com/2026/10/06/i-built-a-stereo-vision-board-for-hardware-hackers/",
+    "title": "I Built a Stereo Vision Board for Hardware Hackers",
+    "expected": "not-ai"
+  },
+  {
+    "url": "https://www.apollo.com/wealth/insights-news/insights/daily-spark/no-signs-of-ai-payoff-outside-the-tech-sector",
+    "title": "No signs of AI payoff outside the tech sector",
+    "expected": "ai"
+  },
+  {
+    "url": "https://martinfinkel.com/blog/gaussian-blur-c-vs-csharp/",
+    "title": "C vs. C#: racing VLC's Gaussian blur",
+    "expected": "not-ai"
+  },
+  {
+    "url": "https://security.apple.com/research-device/",
+    "title": "Apple Security Research Device",
+    "expected": "not-ai"
+  },
+  {
+    "url": "https://funcarena.com/articles/the-quake-fan-who-built-the-map-editor-everybody-uses",
+    "title": "The Quake Fan who built the map editor everybody uses",
+    "expected": "not-ai"
+  },
+  {
+    "url": "https://www.infoq.com/news/2026/10/tornadovm-7-gpu/",
+    "title": "TornadoVM 7 Enables GPU-Native Workloads from Java Applications",
+    "expected": "not-ai"
+  },
+  {
+    "url": "https://www.cam.ac.uk/research/news/rise-of-collagen-eating-microbes-may-help-explain-gaps-in-the-fossil-record",
+    "title": "Rise of collagen-eating microbes may help explain gaps in the fossil record",
+    "expected": "not-ai"
+  },
+  {
+    "url": "https://larstofus.com/2025/11/16/how-to-run-a-city-builder-on-12-5-mhz/",
+    "title": "How to run a city builder on 16 MHz",
+    "expected": "not-ai"
+  },
+  {
+    "url": "https://steveblank.com/2026/10/24/europe-gets-a-wake-up-call/",
+    "title": "Elon Musk Just Gave Europe a Reason to Replace American Technology",
+    "expected": "not-ai"
+  },
+  {
+    "url": "https://nitter.click/AikidoSecurity/status/2113759110625906950?__galadriel=lPmlGl9id4oAd5UeBwMhlYKArHyr6lR2IDGujPwB5HV2kQ1aLoPWFd5A9sGuzNcmrp8fUso8qygmHcKTDZ8MNHWqQ3bDJcycV87xp_0VypzQLYj6O_RRHlZuQqj33oASGY2YLSoAiMjeOZN40h7Stf8AG7DPrGZbAPVKUXy36HoMudRbvwF3_r2uYNmfJMhpKzywQDM6Ab8",
+    "title": "Evolving Threat: http2shell is an RCE in Node, Python, and more",
+    "expected": "not-ai"
+  },
+  {
+    "url": "https://ayoships.com/breakdowns/block-blast",
+    "title": "How Block Blast harvests its players for ad money",
+    "expected": "not-ai"
+  },
+  {
+    "url": "https://terrytao.wordpress.com/2026/10/24/oai-math-revised-a-community-hub-for-revising-openais-math-write-ups/",
+    "title": "Oai-math-revised: a community hub for revising OpenAI's math write-ups",
+    "expected": "ai"
+  },
+  {
+    "url": "https://arxiv.org/abs/2610.29162",
+    "title": "Why is AI generated language so hard to understand?",
+    "expected": "ai"
+  }
+]

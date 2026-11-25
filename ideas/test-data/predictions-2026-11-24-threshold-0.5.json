@@ -1,0 +1,279 @@
+{
+  "snapshot": "front-page-2026-11-24.html",
+  "threshold": 0.5,
+  "promptName": "simple",
+  "model": "Laya-Q8_0",
+  "generated": "2026-11-24T16:43:07.188Z",
+  "stories": [
+    {
+      "id": "50622934",
+      "rank": 29,
+      "title": "Making a dumb TV just smart enough",
+      "url": "https://qsantos.fr/2026/11/19/making-a-dumb-tv-just-smart-enough/",
+      "domain": "",
+      "p": 0.875947159490222,
+      "hide": true
+    },
+    {
+      "id": "50622854",
+      "rank": 23,
+      "title": "Declare is a UI language for you and your AI",
+      "url": "https://davidtemkin.github.io/declarelang/",
+      "domain": "",
+      "p": 0.789103219096247,
+      "hide": true
+    },
+    {
+      "id": "50623515",
+      "rank": 21,
+      "title": "Drone Maps of Salvage Yards",
+      "url": "https://salvageyarddrone.wordpress.com/",
+      "domain": "",
+      "p": 0.7367853916692655,
+      "hide": true
+    },
+    {
+      "id": "50614249",
+      "rank": 8,
+      "title": "Ladybird is now in alpha",
+      "url": "https://ladybird.org/posts/alpha/",
+      "domain": "",
+      "p": 0.7035711848115062,
+      "hide": true
+    },
+    {
+      "id": "50629231",
+      "rank": 7,
+      "title": "A training engine for your local model, using your idle compute",
+      "url": "https://github.com/sous-labs/songe",
+      "domain": "",
+      "p": 0.6309399806202519,
+      "hide": true
+    },
+    {
+      "id": "50630309",
+      "rank": 9,
+      "title": "Tidal Bans AI-Generated Music",
+      "url": "https://variety.com/2026/music/news/tidal-bans-ai-generated-music-1236956924/",
+      "domain": "",
+      "p": 0.4833611943545113,
+      "hide": false
+    },
+    {
+      "id": "50619103",
+      "rank": 22,
+      "title": "GPUI is getting its own repository",
+      "url": "https://github.com/zed-industries/gpui",
+      "domain": "",
+      "p": 0.379939172991478,
+      "hide": false
+    },
+    {
+      "id": "50620349",
+      "rank": 10,
+      "title": "Stalwart is now a drop-in replacement for Microsoft Exchange",
+      "url": "https://stalw.art/blog/microsoft-exchange-replacement/",
+      "domain": "",
+      "p": 0.3758747565774411,
+      "hide": false
+    },
+    {
+      "id": "50625953",
+      "rank": 13,
+      "title": "Just a Few Bugs",
+      "url": "https://www.justafewbugs.xyz/",
+      "domain": "",
+      "p": 0.35973630403812495,
+      "hide": false
+    },
+    {
+      "id": "50627340",
+      "rank": 2,
+      "title": "LLM agents work for their parent companies, not for you",
+      "url": "https://michaelharley.net/posts/2026/11/01/llm-agents-work-for-their-parent-companies-not-for-you/",
+      "domain": "",
+      "p": 0.33840297125907154,
+      "hide": false
+    },
+    {
+      "id": "50615308",
+      "rank": 28,
+      "title": "\"Dario is hyping the dangers so OSS models are illegal and he stays in control\"",
+      "url": "https://twitter.com/ylecun/status/2124550037912920090",
+      "domain": "",
+      "p": 0.33265226319476543,
+      "hide": false
+    },
+    {
+      "id": "50605361",
+      "rank": 19,
+      "title": "The new set of problems for engineers to solve",
+      "url": "https://www.katelynlesse.com/blog/new-problems-for-engineers-to-solve",
+      "domain": "",
+      "p": 0.2954222847534801,
+      "hide": false
+    },
+    {
+      "id": "50619207",
+      "rank": 26,
+      "title": "Bored.com: Fun, interesting and cool websites to explore when bored",
+      "url": "https://www.bored.com/",
+      "domain": "",
+      "p": 0.287170359780404,
+      "hide": false
+    },
+    {
+      "id": "50604710",
+      "rank": 27,
+      "title": "Modernizing iperf/iperf3 and introducing fireperf",
+      "url": "https://blog.daniel-baumann.ch/posts/20261122-1.html",
+      "domain": "",
+      "p": 0.26608715462039184,
+      "hide": false
+    },
+    {
+      "id": "50598555",
+      "rank": 18,
+      "title": "Mechanical Pencil: Spray Bottle",
+      "url": "https://mechanical-pencil.com/products/spray-bottle",
+      "domain": "",
+      "p": 0.20118738490253307,
+      "hide": false
+    },
+    {
+      "id": "50606192",
+      "rank": 30,
+      "title": "Free alternative TV network built from the Internet Archive's forgotten videos",
+      "url": "https://spelunkr.tv",
+      "domain": "",
+      "p": 0.18266064447417124,
+      "hide": false
+    },
+    {
+      "id": "50592307",
+      "rank": 24,
+      "title": "Arctic: A Practical Lock-Free Adaptive Radix Tree",
+      "url": "https://www.usenix.org/conference/osdi26/presentation/ni",
+      "domain": "",
+      "p": 0.1589588051720656,
+      "hide": false
+    },
+    {
+      "id": "50624497",
+      "rank": 1,
+      "title": "2035 came early",
+      "url": "https://fzakaria.com/2026/11/23/2035-came-early",
+      "domain": "",
+      "p": 0.1333059525504762,
+      "hide": false
+    },
+    {
+      "id": "50599458",
+      "rank": 4,
+      "title": "How a Mechanical Watch Keeps Time (Interactive 3D)",
+      "url": "https://martincmartin.github.io/slidev-stem/watches/article/1/",
+      "domain": "",
+      "p": 0.13226942048177046,
+      "hide": false
+    },
+    {
+      "id": "50611576",
+      "rank": 17,
+      "title": "Nvidia Reinstates Jensen Huang as CEO",
+      "url": "https://www.cnbc.com/2026/11/23/nvidia-jensen-huang-ceo.html",
+      "domain": "",
+      "p": 0.12855549707719924,
+      "hide": false
+    },
+    {
+      "id": "50598094",
+      "rank": 11,
+      "title": "An anti-slavery sugar bowl (2024)",
+      "url": "https://www.vam.ac.uk/blog/museum-life/an-anti-slavery-sugar-bowl",
+      "domain": "",
+      "p": 0.12703546709270078,
+      "hide": false
+    },
+    {
+      "id": "50608343",
+      "rank": 12,
+      "title": "SeaStore: Redesigning Ceph's Storage Back End for CPU-Efficient NVMe Performance",
+      "url": "https://dl.acm.org/doi/10.1145/3828523.3857112",
+      "domain": "",
+      "p": 0.11758736453052325,
+      "hide": false
+    },
+    {
+      "id": "50625384",
+      "rank": 6,
+      "title": "Quad9 pulled their DNS service from France",
+      "url": "https://quad9.net/news/blog/quad9-service-deactivation-in-france/",
+      "domain": "",
+      "p": 0.11603146185217184,
+      "hide": false
+    },
+    {
+      "id": "50622774",
+      "rank": 25,
+      "title": "New York Bans Subscription and Post-Purchase Fees on Cars",
+      "url": "https://www.governor.ny.gov/news/money-your-pockets-governor-hochul-signs-bill-restricting-exploitative-vehicle-subscription",
+      "domain": "",
+      "p": 0.11411405301597556,
+      "hide": false
+    },
+    {
+      "id": "50624061",
+      "rank": 16,
+      "title": "AMD EPYC Zen 6 vs. Zen 1 Performance: 12.1x Geo Mean in Less Than 10 Years",
+      "url": "https://www.phoronix.com/review/amd-epyc-9006-7601",
+      "domain": "",
+      "p": 0.09291417484664512,
+      "hide": false
+    },
+    {
+      "id": "50604355",
+      "rank": 5,
+      "title": "Tomato Fraud? When San Marzano Is \"San Marzano\" – Cinco Tomatos",
+      "url": "https://slate.com/life/2026/11/cento-san-marzano-tomato-sauce-recipes-lawsuit.html",
+      "domain": "",
+      "p": 0.09214601739419721,
+      "hide": false
+    },
+    {
+      "id": "50622638",
+      "rank": 15,
+      "title": "GTA 6 Recomp (Leonida) banned from GitHub while lead dev was in school",
+      "url": "https://github.com/ItsNotRexed/Leonida/issues",
+      "domain": "",
+      "p": 0.08836488117756104,
+      "hide": false
+    },
+    {
+      "id": "50626413",
+      "rank": 3,
+      "title": "Worshipping at the altar of Brendan Gregg",
+      "url": "https://fzakaria.com/2026/11/12/worshipping-at-the-altar-of-brendan-gregg",
+      "domain": "",
+      "p": 0.08444117684219474,
+      "hide": false
+    },
+    {
+      "id": "50626861",
+      "rank": 14,
+      "title": "Who in Washington owns and trades Nvidia stock",
+      "url": "https://www.kadoa.com/congress/insights/trump-nvidia",
+      "domain": "",
+      "p": 0.05187450590771011,
+      "hide": false
+    },
+    {
+      "id": "50598679",
+      "rank": 20,
+      "title": "Del Casher–guitarist who was driving force behind the wah-wah pedal–dies at 88",
+      "url": "https://www.nytimes.com/2026/11/17/obituaries/del-casher-dead.html",
+      "domain": "",
+      "p": 0.00001625325037727332,
+      "hide": false
+    }
+  ]
+}
