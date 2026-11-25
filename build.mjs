@@ -1,7 +1,7 @@
 // Build the MV3 extension with esbuild into dist/: bundle each entry and copy
 // the static assets (popup.html/css, the nobodywho wasm binary).
 import { build, context } from "esbuild";
-import { cpSync, mkdirSync, readFileSync, rmSync, statSync } from "node:fs";
+import { cpSync, mkdirSync, readFileSync, rmSync, statSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -55,6 +55,8 @@ async function main() {
   // import.meta.url from the emscripten glue).
   cpSync(NW_WASM, join(outbase, "nobodywho_minimal.wasm"));
 
+  writeChromeManifest();
+
   const buildClassic = () => build({ ...esbuildOpts, format: "iife", entryPoints: classicEntries, outdir: outbase });
   const buildModule = () => build({ ...esbuildOpts, format: "esm", entryPoints: moduleEntries, outdir: outbase });
 
@@ -68,6 +70,23 @@ async function main() {
     await buildModule();
     verify();
   }
+}
+
+// Chrome loads the extension from dist/ (its manifest must use MV3's
+// background.service_worker). Firefox loads the repo-root manifest, which uses
+// the event-page background.scripts (Firefox's service_worker support is still
+// disabled). Same bundles, two manifests.
+function writeChromeManifest() {
+  const src = JSON.parse(readFileSync(join(root, "manifest.json"), "utf8"));
+  const strip = (p) => p.replace(/^dist\//, "");
+  const chrome = {
+    ...src,
+    background: { service_worker: strip(src.background.scripts[0]) },
+    content_scripts: src.content_scripts.map((cs) => ({ ...cs, js: cs.js.map(strip) })),
+    action: { ...src.action, default_popup: strip(src.action.default_popup) },
+  };
+  delete chrome.browser_specific_settings;
+  writeFileSync(join(outbase, "manifest.json"), JSON.stringify(chrome, null, 2) + "\n");
 }
 
 // Sanity gates so a regression can never silently reach the browser:

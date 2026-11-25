@@ -12,7 +12,15 @@ import { MODES, DEFAULT_THRESHOLD, CACHE_VERSION, cacheStorageKey, MODEL_PATH } 
 declare const chrome: any;
 type Port = any;
 
-const WORKER_URL = "dist/host-worker.js";
+// Resolve the host worker next to this background script, so the same bundle
+// works whether the extension is loaded from the repo root (Firefox: the
+// background is "dist/background.js") or from dist/ (Chrome: "background.js").
+const WORKER_URL = (() => {
+  const bg: any = chrome.runtime.getManifest().background ?? {};
+  const script: string = bg.service_worker ?? bg.scripts?.[0] ?? "";
+  const dir = script.includes("/") ? script.slice(0, script.lastIndexOf("/") + 1) : "";
+  return dir + "host-worker.js";
+})();
 const PORT_NAME = "hn";
 const ITEM_TTL_MS = 5000;
 const MAX_WORKERS = 8; // parallel inferences (each = 1 thread + its own copy of the model)

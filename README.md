@@ -39,11 +39,17 @@ npm run test:browser # end-to-end in headless Firefox (geckodriver + Firefox.app
 ## Load it
 
 **Firefox**: `about:debugging#/runtime/this-firefox` → *Load Temporary Add-on* →
-`manifest.json`. After a rebuild, *Remove* and re-load rather than *Reload*, so
-the ~366 MB wasm isn't served stale. The first run downloads the model (~450 MB,
-`hf://ggml-org/Laya-GGUF/Laya-Q8_0.gguf`) into IndexedDB.
+`manifest.json` (the repo-root one, which uses the event-page background).
+After a rebuild, *Remove* and re-load rather than *Reload*, so the ~366 MB wasm
+isn't served stale.
 
-**Chrome/Edge**: not yet supported (the manifest uses an event-page background).
+**Chrome/Edge**: `npm run build`, then `chrome://extensions` → *Developer mode* →
+*Load unpacked* → the `dist/` directory. `dist/manifest.json` is generated with
+MV3's `background.service_worker` (Chrome rejects the event-page
+`background.scripts`), and its paths are relative to `dist/`.
+
+The first run downloads the model (~450 MB,
+`hf://ggml-org/Laya-GGUF/Laya-Q8_0.gguf`) into IndexedDB.
 
 ## How it works
 

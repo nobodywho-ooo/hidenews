@@ -43,3 +43,14 @@ test("wasm binary present and non-trivial", () => {
   assert.ok(existsSync(p));
   assert.ok(readFileSync(p).byteLength > 100 * 1024 * 1024);
 });
+
+test("dist/ has a Chrome manifest using an MV3 service worker and dist-relative paths", () => {
+  const m = JSON.parse(readFileSync(join(dist, "manifest.json"), "utf8"));
+  assert.equal(m.manifest_version, 3);
+  assert.equal(m.background.service_worker, "background.js");
+  assert.equal(m.background.scripts, undefined);
+  assert.deepEqual(m.content_scripts[0].js, ["content.js"]);
+  assert.equal(m.action.default_popup, "popup/popup.html");
+  assert.equal(m.browser_specific_settings, undefined);
+  assert.ok(m.content_security_policy.extension_pages.includes("wasm-unsafe-eval"));
+});
