@@ -15,11 +15,14 @@ const ITEM_TTL_MS = 5000; // drop items not reaffirmed within 5s
 
 type Port = any;
 
-let worker: Worker | null = null;
 let modelStatus: Record<string, unknown> = { status: "idle" };
-let modelReady = false;
+let modelReady = false; // true once any worker has loaded the model
 let modelError: string | null = null;
-let inFlightId: string | null = null;
+
+const MAX_WORKERS = 8; // parallel inferences (each = 1 thread + ~450MB model RAM)
+const workers: Worker[] = [];
+const readyWorkers = new Set<Worker>();
+const busy = new Map<Worker, string>(); // which item each worker is processing
 
 // ---- verdict cache (in-memory for this run; persisted, version-stamped) ----
 const cache = new Map<string, number>();
@@ -32,7 +35,6 @@ const items = new Map<string, { id: string; title: string; waiters: Set<Port>; l
 const MAX_RETRIES = 2;
 const nowMs = () => Date.now();
 
-let processing = false;
 let pumpTimer: ReturnType<typeof setTimeout> | null = null;
 
 // which ids each port (page) currently declares interest in
@@ -168,8 +170,8 @@ setInterval(() => {
 }, 2000);
 
 // ---- processing loop (worker is stateless; queue lives here) ----
-function ensureWorker(): Worker | null {
-  if (worker) return worker;
+function spawnWorker(): Worker | null {
+  if (workers.length >= MAX_WORKERS) return null;
   let w: Worker;
   try {
     w = new Worker(chrome.runtime.getURL(WORKER_URL), { type: "module" });
@@ -178,25 +180,29 @@ function ensureWorker(): Worker | null {
     setModelError(String(e));
     return null;
   }
-  w.onmessage = (e: MessageEvent) => onWorkerMessage(e.data);
-  w.onerror = (e: ErrorEvent) => {
-    console.error("[hidenews bg] worker error:", e?.message);
+  workers.push(w);
+  w.onmessage = (e: MessageEvent) => onWorkerMessage(w, e.data);
+  w.onerror = () => {
+    // worker died: drop it and requeue whatever it was processing
+    const lost = busy.get(w);
+    const i = workers.indexOf(w);
+    if (i >= 0) workers.splice(i, 1);
+    readyWorkers.delete(w);
+    busy.delete(w);
     try {
       w.terminate();
     } catch {}
-    worker = null;
-    const lost = inFlightId;
-    inFlightId = null;
-    processing = false;
     if (lost) {
       const item = items.get(lost);
-      if (item) moveToFront(lost);
+      if (item) {
+        item.lastSeen = nowMs();
+        moveToFront(lost);
+      }
     }
     pump();
   };
-  worker = w;
-  worker.postMessage({ kind: "init" });
-  return worker;
+  w.postMessage({ kind: "init" });
+  return w;
 }
 
 function schedulePump() {
@@ -207,31 +213,36 @@ function schedulePump() {
   }, 30);
 }
 
-function pump() {
-  if (processing || !modelReady) return; // queue first; dispatch once loading is done
-  if (queue.length === 0) return;
-  const id = queue.shift();
-  if (id === undefined) return;
-  const item = items.get(id);
-  if (!item || item.waiters.size === 0) {
-    if (id !== undefined) dropEmptyItem(id);
-    processing = false;
-    pump();
-    return;
-  }
-  const w = ensureWorker();
-  if (!w) {
-    moveToFront(id);
-    return;
-  }
-  processing = true;
-  inFlightId = id;
-  w.postMessage({ kind: "classify", id, title: item.title });
+// An idle worker that has finished loading its model, or null.
+function idleWorker(): Worker | null {
+  for (const w of workers) if (readyWorkers.has(w) && !busy.has(w)) return w;
+  return null;
 }
 
-function done(id: string) {
-  if (inFlightId === id) inFlightId = null;
-  processing = false;
+function pump() {
+  if (queue.length === 0) return;
+  // dispatch to every idle+ready worker while work remains
+  while (queue.length > 0) {
+    const w = idleWorker();
+    if (!w) {
+      // all busy: grow toward MAX_WORKERS if there's still a backlog
+      if (workers.length < MAX_WORKERS && modelReady) spawnWorker();
+      return;
+    }
+    const id = queue.shift();
+    if (id === undefined) break;
+    const item = items.get(id);
+    if (!item || item.waiters.size === 0) {
+      dropEmptyItem(id);
+      continue;
+    }
+    busy.set(w, id);
+    w.postMessage({ kind: "classify", id, title: item.title });
+  }
+}
+
+function freeWorker(w: Worker, id: string) {
+  if (busy.get(w) === id) busy.delete(w);
   pump();
 }
 
@@ -250,37 +261,38 @@ function errorOutQueue() {
     for (const p of item?.waiters ?? []) safePost(p, { kind: "classify-error", id, error: m });
     dropEmptyItem(id);
   }
-  if (inFlightId) {
-    const id = inFlightId;
+  for (const [w, id] of [...busy]) {
     const item = items.get(id);
     for (const p of item?.waiters ?? []) safePost(p, { kind: "classify-error", id, error: m });
     dropEmptyItem(id);
-    inFlightId = null;
+    busy.delete(w);
   }
-  processing = false;
 }
 
-function onWorkerMessage(msg: any) {
+function onWorkerMessage(w: Worker, msg: any) {
   if (!msg) return;
   if (msg.kind === "model-status") {
     modelStatus = msg;
     if (msg.status === "ready") {
+      readyWorkers.add(w);
       modelReady = true;
       modelError = null;
       pump();
     } else if (msg.status === "error") {
       setModelError(msg.message ?? "model failed to load");
     }
-    persistStatus();
-    const statusMsg = { kind: "model-status", ...msg };
-    for (const item of items.values()) for (const p of item.waiters) safePost(p, statusMsg);
-    safeSend(statusMsg);
+    if (msg.status === "ready" || msg.status === "progress") {
+      persistStatus();
+      const statusMsg = { kind: "model-status", ...msg };
+      for (const item of items.values()) for (const p of item.waiters) safePost(p, statusMsg);
+      safeSend(statusMsg);
+    }
   } else if (msg.kind === "verdict") {
     const item = items.get(msg.id);
     for (const p of item?.waiters ?? []) safePost(p, { kind: "verdict", id: msg.id, p: msg.p });
     dropEmptyItem(msg.id);
     rememberVerdict(msg.id, msg.p);
-    done(msg.id);
+    freeWorker(w, msg.id);
   } else if (msg.kind === "classify-error") {
     const item = items.get(msg.id);
     if (modelError) {
@@ -290,12 +302,11 @@ function onWorkerMessage(msg: any) {
       item.retries++;
       item.lastSeen = nowMs();
       moveToFront(msg.id);
-      done(msg.id);
     } else {
       for (const p of item?.waiters ?? []) safePost(p, { kind: "classify-error", id: msg.id, error: msg.error ?? "inference failed" });
       dropEmptyItem(msg.id);
     }
-    done(msg.id);
+    freeWorker(w, msg.id);
   } else if (msg.kind === "status") {
     console.log("[hidenews bg]", msg.text);
   }
@@ -337,4 +348,4 @@ chrome.storage.local.get(["mode", "threshold"], (v: any) => {
 });
 
 loadCache();
-ensureWorker(); // preload the model so the ready-gated pump doesn't deadlock
+spawnWorker(); // preload the model (first worker); more spawn on demand up to MAX_WORKERS
