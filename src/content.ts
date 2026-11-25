@@ -2,8 +2,8 @@
 // long-lived Port) which stories still need a verdict, and renders each row
 // when its verdict arrives. Two ways to render:
 //
-//   normal (default) — story rows are greyed while being classified, and
-//     stories matching the filter are hidden. Nothing else changes.
+//   normal (default) — story rows stay hidden while being classified and are
+//     only shown once a verdict says they're not filtered. Nothing else changes.
 //   debug — every row is tinted by P(ai), with a hover label and a badge, and
 //     nothing is ever hidden. Toggled from the popup.
 import { MODES, VIEWS, DEFAULT_THRESHOLD, DEFAULT_VIEW, type Mode, type View } from "./shared/config";
@@ -116,16 +116,20 @@ function addBadge(head: HTMLTableRowElement, text: string) {
     "background:rgba(0,0,0,.12);color:inherit;vertical-align:middle;";
   host.appendChild(badge);
 }
-/** While a story is being classified: grey it out (both views). */
+/** While a story is being classified. Normal mode hides it until the verdict
+ * arrives (so nothing is shown until we know whether it's filtered); debug mode
+ * greys it out and labels it. */
 function markPending(id: string) {
   clearBlock(id);
-  for (const row of storyBlock(id)) {
-    row.style.filter = "grayscale(1)";
-    row.style.opacity = "0.45";
-  }
   if (view === VIEWS.DEBUG) {
+    for (const row of storyBlock(id)) {
+      row.style.filter = "grayscale(1)";
+      row.style.opacity = "0.45";
+    }
     const head = headRow(id);
     if (head) head.title = "hidenews: classifying…";
+  } else {
+    for (const row of storyBlock(id)) row.style.display = "none";
   }
 }
 function applyVerdict(id: string, p: number) {

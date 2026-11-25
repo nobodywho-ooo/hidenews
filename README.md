@@ -64,10 +64,9 @@ the ~366 MB wasm isn't served stale. The first run downloads the model (~450 MB,
 
 Toggled with the *Debug view* button in the popup; **normal** is the default.
 
-- **Normal** — the real experience. Story rows are greyed out while they're
-  being classified; once a verdict arrives, stories matching the filter are
-  hidden and kept stories are left exactly as they were. No other cosmetic
-  changes.
+- **Normal** — the real experience. Story rows are hidden while they're being
+  classified; once a verdict arrives, stories matching the filter stay hidden
+  and kept stories are shown exactly as they were. No other cosmetic changes.
 - **Debug** — every row is tinted green→red by P(ai), with a hover label and a
   badge showing the probability and whether it would be filtered. Nothing is
   hidden, so you can inspect the classifier's behaviour.
