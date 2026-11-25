@@ -253,6 +253,7 @@ chrome.runtime.onMessage.addListener((msg: any, _sender: unknown, sendResponse: 
       // model failed to load: pass the error to this page now.
       safeSend({ kind: "classify-error", id: msg.id, error: modelError });
     }
+    ensureWorker(); // start model load now (pump dispatches once it's ready)
     sendResponse({ ok: true }); // immediate ack: data is durably handled
     return;
   }
@@ -287,3 +288,4 @@ chrome.storage.local.get(["mode", "threshold"], (v: any) => {
 });
 
 loadCache();
+ensureWorker(); // preload the model so the ready-gated pump doesn't deadlock

@@ -7,6 +7,11 @@ import { safeSend } from "./shared/messaging";
 
 declare const chrome: any;
 
+// Marker used by the test harness to confirm injection.
+if (typeof document !== "undefined") {
+  document.documentElement.dataset.hidenewsCt = "loaded";
+}
+
 const verdicts = new Map<string, number>(); // id -> p(ai)
 const inflight = new Set<string>(); // ids with an outstanding classify request
 const requested = new Set<string>(); // ids this page asked for (for release on leave)

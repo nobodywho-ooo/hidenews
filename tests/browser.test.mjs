@@ -8,7 +8,7 @@
 // later runs are fast (IndexedDB-cached).
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { mkdirSync, readFileSync, writeFileSync, cpSync, rmSync, symlinkSync } from "node:fs";
+import { mkdirSync, readFileSync, writeFileSync, cpSync, rmSync } from "node:fs";
 import http from "node:http";
 import { createRequire } from "node:module";
 import { dirname, join } from "node:path";
@@ -33,15 +33,13 @@ function buildTestExtension() {
   mkdirSync(EX_DIR, { recursive: true });
   const m = JSON.parse(readFileSync(join(root, "manifest.json"), "utf8"));
   m.content_scripts = [
-    { matches: ["*://news.ycombinator.com/*", `http://127.0.0.1:${FIXTURE_PORT}/*`], js: ["dist/content.js"], run_at: "document_idle", all_frames: false },
+    { matches: ["*://news.ycombinator.com/*", `http://127.0.0.1:${FIXTURE_PORT}/*`], js: ["dist/content.js"], run_at: "document_start", all_frames: false },
   ];
-  // defuse the badge/debug and ensure default mode = hide-ai
+  // enable browser console logging in the test profile if it already exists
+  m.content_scripts[0].all_frames = false;
   writeFileSync(join(EX_DIR, "manifest.json"), JSON.stringify(m, null, 2));
-  try {
-    symlinkSync(join(root, "dist"), join(EX_DIR, "dist"), "dir");
-  } catch {
-    cpSync(join(root, "dist"), join(EX_DIR, "dist"), { recursive: true });
-  }
+  // Real copy — Firefox's temporary add-on loader won't follow a symlinked dist.
+  cpSync(join(root, "dist"), join(EX_DIR, "dist"), { recursive: true });
   return EX_DIR;
 }
 
@@ -71,11 +69,23 @@ test(
       console.log("[test] driver launched");
       const addonId = await driver.installAddon(exDir, true);
       console.log("[test] installed add-on:", addonId);
+      await driver.sleep(3000); // let the add-on register before navigating
 
       await driver.get(FIXTURE_URL);
+      await driver.sleep(2000); // let content scripts inject before asserting
       console.log("[test] navigated to fixture");
 
-      // wait for the model to become ready (content sets dataset.hidenewsModel)
+      // 1) confirm the content script actually injected on the fixture
+  mkdirSync(FF_PROFILE, { recursive: true });
+      await driver.wait(
+        async () =>
+          (await driver.executeScript("return document.documentElement.dataset.hidenewsCt || ''")) === "loaded",
+        15000,
+        "content script did not inject on the fixture",
+      );
+      console.log("[test] content script injected");
+
+      // 2) wait for the model to become ready (content sets dataset.hidenewsModel)
       const t0 = Date.now();
       let status = "";
       while (Date.now() - t0 < 420000) {
