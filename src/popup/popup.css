@@ -28,6 +28,18 @@ input[type="range"] { width: 100%; margin-top: 6px; }
   font-size: 11px;
   color: var(--muted);
 }
+.view button {
+  width: 100%;
+  padding: 6px 10px;
+  font: inherit;
+  border: 1px solid rgba(127, 127, 127, 0.55);
+  border-radius: 6px;
+  background: rgba(127, 127, 127, 0.12);
+  color: inherit;
+  cursor: pointer;
+}
+.view button.on { background: #1a8a4a; border-color: #1a8a4a; color: #fff; }
+.view .hint { margin: 6px 0 0; font-size: 11px; color: var(--muted); }
 .model .status { font-size: 12px; min-height: 16px; }
 .model .status.ok { color: #1a8a4a; }
 .model .status.busy { color: #946300; }

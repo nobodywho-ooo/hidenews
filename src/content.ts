@@ -1,7 +1,12 @@
-// Content script for news.ycombinator.com. Marks story rows pending, tells the
-// background (over a long-lived Port) which stories still need a verdict, and
-// styles each row when its verdict arrives.
-import { MODES, DEFAULT_THRESHOLD, type Mode } from "./shared/config";
+// Content script for news.ycombinator.com. Tells the background (over a
+// long-lived Port) which stories still need a verdict, and renders each row
+// when its verdict arrives. Two ways to render:
+//
+//   normal (default) — story rows are greyed while being classified, and
+//     stories matching the filter are hidden. Nothing else changes.
+//   debug — every row is tinted by P(ai), with a hover label and a badge, and
+//     nothing is ever hidden. Toggled from the popup.
+import { MODES, VIEWS, DEFAULT_THRESHOLD, DEFAULT_VIEW, type Mode, type View } from "./shared/config";
 
 declare const chrome: any;
 
@@ -12,18 +17,31 @@ const verdicts = new Map<string, number>(); // id -> P(ai)
 const failed = new Set<string>(); // gave up (background already retried)
 let mode: Mode = MODES.HIDE_AI;
 let threshold = DEFAULT_THRESHOLD;
+let view: View = DEFAULT_VIEW;
 
 // ---- settings ----
-chrome.storage.local.get(["mode", "threshold"], (v: any) => {
+chrome.storage.local.get(["mode", "threshold", "view"], (v: any) => {
   if (v.mode) mode = v.mode;
   if (typeof v.threshold === "number") threshold = v.threshold;
-  reapplyAll();
+  if (v.view) view = v.view;
+  renderAll();
 });
 chrome.storage.onChanged.addListener((changes: any, area: string) => {
   if (area !== "local") return;
-  if (changes.mode) mode = changes.mode.newValue;
-  if (changes.threshold) threshold = changes.threshold.newValue;
-  reapplyAll();
+  let dirty = false;
+  if (changes.mode) {
+    mode = changes.mode.newValue;
+    dirty = true;
+  }
+  if (changes.threshold) {
+    threshold = changes.threshold.newValue;
+    dirty = true;
+  }
+  if (changes.view) {
+    view = changes.view.newValue === VIEWS.DEBUG ? VIEWS.DEBUG : VIEWS.NORMAL;
+    dirty = true;
+  }
+  if (dirty) renderAll();
 });
 
 // ---- Port to the background ----
@@ -59,9 +77,12 @@ function storyFor(row: HTMLTableRowElement): Story | null {
   const title = row.querySelector("span.titleline a")?.textContent?.trim();
   return row.id && title ? { id: row.id, title } : null;
 }
+function headRow(id: string): HTMLTableRowElement | null {
+  return document.getElementById(id) as HTMLTableRowElement | null;
+}
 /** The title row plus its following subtext/spacer rows. */
 function storyBlock(id: string): HTMLTableRowElement[] {
-  const start = document.getElementById(id) as HTMLTableRowElement | null;
+  const start = headRow(id);
   if (!start) return [];
   const rows = [start];
   for (let el = start.nextElementSibling as HTMLTableRowElement | null; el; el = el.nextElementSibling as any) {
@@ -71,56 +92,92 @@ function storyBlock(id: string): HTMLTableRowElement[] {
   return rows;
 }
 
-// ---- styling ----
-function resetRow(row: HTMLTableRowElement) {
-  row.style.filter = "none";
-  row.style.opacity = "1";
-  row.style.boxShadow = "none";
-  row.classList.remove("hidenews-ai");
-}
-function markPending(id: string) {
+// ---- rendering ----
+function clearBlock(id: string) {
   for (const row of storyBlock(id)) {
-    row.style.filter = "blur(1px) saturate(0.6)";
-    row.style.opacity = "0.6";
+    row.style.filter = "";
+    row.style.opacity = "";
+    row.style.background = "";
+    row.style.boxShadow = "";
+    row.style.display = "";
+  }
+  const head = headRow(id);
+  if (!head) return;
+  head.removeAttribute("title");
+  head.querySelector(".hidenews-badge")?.remove();
+}
+function addBadge(head: HTMLTableRowElement, text: string) {
+  const host = head.querySelector("span.titleline") ?? head;
+  const badge = document.createElement("span");
+  badge.className = "hidenews-badge";
+  badge.textContent = text;
+  badge.style.cssText =
+    "margin-left:6px;padding:0 5px;border-radius:8px;font-size:11px;font-weight:600;" +
+    "background:rgba(0,0,0,.12);color:inherit;vertical-align:middle;";
+  host.appendChild(badge);
+}
+/** While a story is being classified: grey it out (both views). */
+function markPending(id: string) {
+  clearBlock(id);
+  for (const row of storyBlock(id)) {
+    row.style.filter = "grayscale(1)";
+    row.style.opacity = "0.45";
+  }
+  if (view === VIEWS.DEBUG) {
+    const head = headRow(id);
+    if (head) head.title = "hidenews: classifying…";
   }
 }
 function applyVerdict(id: string, p: number) {
-  const rows = storyBlock(id);
-  if (!rows.length) return;
+  if (!storyBlock(id).length) return;
+  clearBlock(id);
+  const head = headRow(id);
+  if (!head) return;
   const isAi = p >= threshold;
-  const flagged = mode === MODES.ONLY_AI ? !isAi : isAi;
-  const hue = 120 - p * 120; // green (not AI) → red (AI)
-  for (const row of rows) {
-    resetRow(row);
-    if (flagged) {
-      row.style.background = "linear-gradient(to right, rgba(190,30,20,0.30), rgba(190,30,20,0.10))";
-      row.style.boxShadow = "inset 0 0 0 1px rgba(160,20,15,0.35), inset 3px 0 0 #b3261e";
-      row.classList.add("hidenews-ai");
-    } else {
-      row.style.background = `hsla(${hue}, 70%, 50%, ${0.06 + p * 0.1})`;
+  const filtered = mode === MODES.ONLY_AI ? !isAi : isAi;
+
+  if (view === VIEWS.DEBUG) {
+    const hue = 120 - p * 120; // green (not AI) → red (AI)
+    for (const row of storyBlock(id)) {
+      row.style.background = `hsla(${hue}, 70%, 50%, ${0.12 + p * 0.28})`;
+      if (filtered) row.style.boxShadow = "inset 3px 0 0 #b3261e";
     }
+    head.dataset.hidenews = filtered ? "filtered" : "kept";
+    head.dataset.hidenewsP = p.toFixed(3);
+    head.title = `hidenews: ${(p * 100).toFixed(0)}% AI → ${filtered ? "filtered" : "kept"} (${mode})`;
+    addBadge(head, `${(p * 100).toFixed(0)}%${filtered ? " ✕" : ""}`);
+  } else {
+    head.dataset.hidenews = filtered ? "hidden" : "visible";
+    head.dataset.hidenewsP = p.toFixed(3);
+    if (filtered) for (const row of storyBlock(id)) row.style.display = "none";
   }
-  rows[0].dataset.hidenews = flagged ? "hidden" : "visible";
-  rows[0].dataset.hidenewsP = p.toFixed(3);
-  rows[0].title = `hidenews: ${(p * 100).toFixed(0)}% about AI`;
 }
 function onError(id: string) {
   failed.add(id);
-  const rows = storyBlock(id);
-  if (!rows.length) return;
-  for (const row of rows) {
-    resetRow(row);
-    row.style.background = "hsla(0, 0%, 0%, 0.04)";
+  if (!storyBlock(id).length) return;
+  clearBlock(id);
+  const head = headRow(id);
+  if (!head) return;
+  head.dataset.hidenews = "error";
+  if (view === VIEWS.DEBUG) {
+    for (const row of storyBlock(id)) row.style.background = "hsla(0, 0%, 0%, 0.06)";
+    head.title = "hidenews: could not classify (model unavailable)";
+    addBadge(head, "error");
   }
-  rows[0].dataset.hidenews = "error";
-  rows[0].title = "hidenews: could not classify (model unavailable)";
 }
 function onVerdict(id: string, p: number) {
   verdicts.set(id, p);
   applyVerdict(id, p);
 }
-function reapplyAll() {
-  for (const [id, p] of verdicts) applyVerdict(id, p);
+/** Re-render every story row from the current state (after a settings change). */
+function renderAll() {
+  for (const row of storyRows()) {
+    const id = row.id;
+    if (!id) continue;
+    if (verdicts.has(id)) applyVerdict(id, verdicts.get(id)!);
+    else if (failed.has(id)) onError(id);
+    else markPending(id);
+  }
 }
 
 // ---- interest declarations ----

@@ -26,6 +26,16 @@ export const MODES = {
 } as const;
 export type Mode = (typeof MODES)[keyof typeof MODES];
 
+// How the page is rendered. NORMAL is the real experience: story rows are greyed
+// while being classified and filtered stories are hidden. DEBUG colours every row
+// by P(ai), adds a hover label and a badge, and never hides anything.
+export const VIEWS = {
+  NORMAL: "normal",
+  DEBUG: "debug",
+} as const;
+export type View = (typeof VIEWS)[keyof typeof VIEWS];
+export const DEFAULT_VIEW: View = VIEWS.NORMAL;
+
 // Version-stamp the verdict cache so that changing the model/prompt/threshold
 // (or upgrading the extension) silently invalidates stale verdicts instead of
 // serving results computed by an old configuration.

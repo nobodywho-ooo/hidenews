@@ -45,11 +45,9 @@ the ~366 MB wasm isn't served stale. The first run downloads the model (~450 MB,
 
 ## How it works
 
-- **Content script** marks each story row pending (blurred) and, over a
-  long-lived Port, declares the stories it still needs — on load, on DOM
-  changes and every 2 s. Rows are tinted green→red by P(ai) as verdicts arrive;
-  in *Hide AI* mode, AI rows are tinted red (in *Only AI* mode, non-AI rows).
-  Nothing is removed, so the page never reflows.
+- **Content script** declares the stories it still needs over a long-lived
+  Port — on load, on DOM changes and every 2 s. How verdicts are rendered
+  depends on the view mode (see below).
 - **Background** answers cached stories immediately and queues the rest
   newest-declaration-first, so the top of the page you're looking at goes
   first. A story nobody has re-declared for 5 s is dropped, so navigating away
@@ -59,6 +57,18 @@ the ~366 MB wasm isn't served stale. The first run downloads the model (~450 MB,
   the model and classify one title at a time (~1.5 s each, single-threaded wasm).
   Each worker holds its own copy of the model: lower `MAX_WORKERS` in
   `src/background.ts` if memory is a concern.
+
+### View modes
+
+Toggled with the *Debug view* button in the popup; **normal** is the default.
+
+- **Normal** — the real experience. Story rows are greyed out while they're
+  being classified; once a verdict arrives, stories matching the filter are
+  hidden and kept stories are left exactly as they were. No other cosmetic
+  changes.
+- **Debug** — every row is tinted green→red by P(ai), with a hover label and a
+  badge showing the probability and whether it would be filtered. Nothing is
+  hidden, so you can inspect the classifier's behaviour.
 
 The question is a 3-option `choice` (ai / ai-adjacent / not-ai); a story counts
 as AI when P(ai) ≥ threshold (default 0.5, adjustable in the popup). It's defined

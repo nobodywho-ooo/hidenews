@@ -1,4 +1,4 @@
-import { MODES, DEFAULT_THRESHOLD } from "../shared/config";
+import { MODES, VIEWS, DEFAULT_THRESHOLD, DEFAULT_VIEW, type View } from "../shared/config";
 import { safeSend } from "../shared/messaging";
 
 declare const chrome: any;
@@ -12,6 +12,9 @@ const thrLabel = $("#thrLabel");
 const statusEl = $("#modelStatus");
 const barEl = $("#modelBar");
 const modelUrlEl = $("#modelUrl");
+const debugBtn = $("#debugBtn") as HTMLButtonElement;
+
+let view: View = DEFAULT_VIEW;
 
 function formatMB(n: number) {
   return n ? `${(n / 1024 / 1024).toFixed(0)} MB` : "…";
@@ -39,27 +42,44 @@ function setModelStatus(s: any) {
   }
 }
 
+function updateDebugButton() {
+  const on = view === VIEWS.DEBUG;
+  debugBtn.textContent = on ? "Debug view: on" : "Debug view: off";
+  debugBtn.setAttribute("aria-pressed", String(on));
+  debugBtn.classList.toggle("on", on);
+}
+
 function loadSettings() {
-  chrome.storage.local.get(["mode", "threshold"], (v: any) => {
+  chrome.storage.local.get(["mode", "threshold", "view"], (v: any) => {
     const m = v.mode === MODES.ONLY_AI ? MODES.ONLY_AI : MODES.HIDE_AI;
     modeHide.checked = m === MODES.HIDE_AI;
     modeOnly.checked = m === MODES.ONLY_AI;
     const t = typeof v.threshold === "number" ? v.threshold : DEFAULT_THRESHOLD;
     thr.value = String(t);
     thrLabel.textContent = t.toFixed(2);
+    view = v.view === VIEWS.DEBUG ? VIEWS.DEBUG : VIEWS.NORMAL;
+    updateDebugButton();
   });
 }
 
-function saveSettings() {
-  const modeVal = modeOnly.checked ? MODES.ONLY_AI : MODES.HIDE_AI;
-  const thresholdVal = Number(thr.value);
-  chrome.storage.local.set({ mode: modeVal, threshold: thresholdVal });
-  thrLabel.textContent = thresholdVal.toFixed(2);
+function saveMode() {
+  chrome.storage.local.set({ mode: modeOnly.checked ? MODES.ONLY_AI : MODES.HIDE_AI });
 }
 
-modeHide.addEventListener("change", saveSettings);
-modeOnly.addEventListener("change", saveSettings);
-thr.addEventListener("input", saveSettings);
+function saveThreshold() {
+  const t = Number(thr.value);
+  thrLabel.textContent = t.toFixed(2);
+  chrome.storage.local.set({ threshold: t });
+}
+
+modeHide.addEventListener("change", saveMode);
+modeOnly.addEventListener("change", saveMode);
+thr.addEventListener("input", saveThreshold);
+debugBtn.addEventListener("click", () => {
+  view = view === VIEWS.DEBUG ? VIEWS.NORMAL : VIEWS.DEBUG;
+  updateDebugButton();
+  chrome.storage.local.set({ view });
+});
 
 function pollStatus() {
   safeSend({ kind: "get-status" }, (res: any) => res && setModelStatus(res));
