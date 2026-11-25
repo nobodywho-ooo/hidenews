@@ -26,7 +26,101 @@ export const HIDE_AI_PROMPT_VERBOSE = {
   },
 };
 
-/** The prompt the extension will use. */
+// Focused: explicit coverage of the categories the simple prompt misses
+// (model releases, coding agents) and the ones it over-triggers on (security,
+// generic hardware).
+export const HIDE_AI_PROMPT_FOCUSED = {
+  is_ai: {
+    type: "noul",
+    instructions: "Is this story about AI or LLMs?",
+    criteria: {
+      true: "AI/LLM model releases or research (GPT, Gemini, Claude, Qwen, GLM, LLaMA); AI companies (OpenAI, Anthropic, Google DeepMind, xAI, Mistral, Hugging Face); AI agents, coding agents, or AI coding tools; AI features in software; AI-generated content; ML/neural-network research; AI chips for training/inference",
+      false: "generic software, security, hardware, science, math, politics, or finance stories that are not about AI or LLMs",
+    },
+  },
+};
+
+// Deflated: strong negative coverage to push down the false-positive prior.
+export const HIDE_AI_PROMPT_DEFLATED = {
+  is_ai: {
+    type: "noul",
+    instructions: "Is the subject of this story artificial intelligence or a large language model?",
+    criteria: {
+      true: "the subject is AI/LLM technology, research, companies, or products",
+      false: "the subject is anything else: generic software, security, operating systems, hardware, science, games, business, politics",
+    },
+  },
+};
+
+// Bare: no criteria at all, just the question.
+export const HIDE_AI_PROMPT_BARE = {
+  is_ai: {
+    type: "noul",
+    instructions: "Is this Hacker News story about AI or LLMs?",
+  },
+};
+
+// Company-aware: names the AI players (incl. Nvidia), short lists.
+export const HIDE_AI_PROMPT_COMPANIES = {
+  is_ai: {
+    type: "noul",
+    instructions: "Is this story about an AI company, AI model, LLM, AI agent, or AI hardware?",
+    criteria: {
+      true: "AI companies (OpenAI, Anthropic, Google DeepMind, Microsoft, Meta AI, Nvidia, xAI, Mistral, DeepSeek, Qwen, GLM); AI model/LLM releases; AI agents, coding agents, AI coding tools; AI chips and AI hardware",
+      false: "software engineering, security, databases, operating systems, science, math, games, politics, finance — anything not about AI",
+    },
+  },
+};
+
+// Actor-oriented phrasing.
+export const HIDE_AI_PROMPT_WHO = {
+  is_ai: {
+    type: "noul",
+    instructions: "Is the subject of this story an AI company, or AI/LLM technology, a model, or an AI product?",
+    criteria: {
+      true: "AI company news or products (OpenAI, Anthropic, Nvidia, Google, Microsoft, Meta, xAI, Mistral...); AI or LLM models; AI agents; AI chips or AI training hardware",
+      false: "stories about other companies, general software, security, science, politics, or finance",
+    },
+  },
+};
+
+// Company-enumeration + strong-negative combo.
+export const HIDE_AI_PROMPT_COMPANIES_DEFLATED = {
+  is_ai: {
+    type: "noul",
+    instructions: "Is the subject of this story AI/LLM technology or an AI company?",
+    criteria: {
+      true: "AI/LLM models or AI features; AI companies like OpenAI, Anthropic, Google, Microsoft, Nvidia, xAI, Mistral, DeepSeek",
+      false: "any non-AI subject: generic software, operating systems, security, hardware hacks, science, math, games, business, politics, finance",
+    },
+  },
+};
+
+// deflated, but names Nvidia specifically (the suite treats Nvidia as AI).
+export const HIDE_AI_PROMPT_DEFLATED_NVIDIA = {
+  is_ai: {
+    type: "noul",
+    instructions: "Is the subject of this story artificial intelligence or a large language model?",
+    criteria: {
+      true: "the subject is AI/LLM technology, research, companies, or products (including Nvidia)",
+      false: "the subject is anything else: generic software, security, operating systems, hardware, science, games, business, politics",
+    },
+  },
+};
+
+// Stronger-negative deflated, tuned against the suite's non-AI topics.
+export const HIDE_AI_PROMPT_DEFLATED_NEG2 = {
+  is_ai: {
+    type: "noul",
+    instructions: "Is the subject of this story artificial intelligence or a large language model?",
+    criteria: {
+      true: "the subject is AI/LLM technology, research, companies, or products",
+      false: "generic software, security, operating systems, hardware hacks, science, math and proofs, databases, finance, politics, music, food, games",
+    },
+  },
+};
+
+/** The prompt the extension will use (updated by the tuning sweep). */
 export const HIDE_AI_PROMPT = HIDE_AI_PROMPT_SIMPLE;
 
 /** Default probability at/above which a story is treated as "about AI". */

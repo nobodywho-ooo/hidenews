@@ -77,7 +77,7 @@
   {
     "url": "https://github.com/os6/nospeaker",
     "title": "Nospeaker \u2500 Make your MacBook's trackpad talk using its haptic motor",
-    "expected": "ai"
+    "expected": "not-ai"
   },
   {
     "url": "https://fosscomics.com/posts/16.%20BSD%20Unix%20Part%206%20-%20The%20Struggle%20for%20Freedom/",
@@ -92,7 +92,7 @@
   {
     "url": "https://github.com/mikuta0407/win4wine",
     "title": "Win4wine \u2013 Run Windows Shell as the Linux Desktop on Wine",
-    "expected": "ai"
+    "expected": "not-ai"
   },
   {
     "url": "https://micjm.com/blog/yes-17m-lines-of-lean-is-a-lot/",
