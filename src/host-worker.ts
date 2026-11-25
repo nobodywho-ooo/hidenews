@@ -23,19 +23,19 @@ function post(msg: unknown) {
 async function loadModel() {
   if (state === "ready" || state === "downloading") return;
   state = "downloading";
-  post({ kind: "model-status", status: "downloading" });
+  post({ kind: "model-status", status: "downloading", modelUrl: MODEL_PATH });
   try {
     const d = await Decision.fromPath({
       modelPath: MODEL_PATH,
       onDownloadProgress: (downloaded: number, total: number) =>
-        post({ kind: "model-status", status: "downloading", downloaded, total }),
+        post({ kind: "model-status", status: "downloading", downloaded, total, modelUrl: MODEL_PATH }),
     });
     decision = d;
     state = "ready";
-    post({ kind: "model-status", status: "ready" });
+    post({ kind: "model-status", status: "ready", modelUrl: MODEL_PATH });
   } catch (e: any) {
     state = "error";
-    post({ kind: "model-status", status: "error", message: String(e?.message ?? e) });
+    post({ kind: "model-status", status: "error", message: String(e?.message ?? e), modelUrl: MODEL_PATH });
   }
 }
 

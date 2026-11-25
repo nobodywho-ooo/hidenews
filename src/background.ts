@@ -4,7 +4,7 @@
 // - drops anything not reaffirmed within 5 s (it was sent recently → keep)
 // - pushes verdicts to every port still interested in a story
 // - items queue while the model loads; dispatched only when it's ready
-import { MODES, DEFAULT_THRESHOLD, CACHE_VERSION, cacheStorageKey } from "./shared/config";
+import { MODES, DEFAULT_THRESHOLD, CACHE_VERSION, cacheStorageKey, MODEL_PATH } from "./shared/config";
 import { safeSend } from "./shared/messaging";
 
 declare const chrome: any;
@@ -81,6 +81,7 @@ function persistStatus() {
         message: modelError ?? modelStatus.message ?? null,
         downloaded: modelStatus.downloaded ?? 0,
         total: modelStatus.total ?? 0,
+        modelUrl: MODEL_PATH,
         at: Date.now(),
       },
     });
@@ -329,6 +330,7 @@ chrome.runtime.onMessage.addListener((msg: any, _sender: unknown, sendResponse: 
       message: modelError ?? modelStatus.message ?? undefined,
       downloaded: modelStatus.downloaded ?? undefined,
       total: modelStatus.total ?? undefined,
+      modelUrl: MODEL_PATH,
     });
     return true;
   }

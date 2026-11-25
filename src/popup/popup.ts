@@ -11,12 +11,14 @@ const thr = $("#threshold") as HTMLInputElement;
 const thrLabel = $("#thrLabel");
 const statusEl = $("#modelStatus");
 const barEl = $("#modelBar");
+const modelUrlEl = $("#modelUrl");
 
 function formatMB(n: number) {
   return n ? `${(n / 1024 / 1024).toFixed(0)} MB` : "…";
 }
 
 function setModelStatus(s: any) {
+  modelUrlEl.textContent = s?.modelUrl ? `Source: ${s.modelUrl}` : "";
   if (s.status === "ready") {
     statusEl.textContent = "Model ready — filtering live.";
     statusEl.className = "status ok";
