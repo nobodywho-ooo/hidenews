@@ -143,11 +143,6 @@ function log(u: string) {
   console.log("[hidenews]", u);
 }
 
-function mkSend(id: string) {
-  safeSend({ kind: "ensure-host" }, () => {
-    void chrome.runtime.lastError; // background may not exist yet; host also will retry
-  });
-}
 
 // ---- flow ----
 function reapplyAll() {
@@ -174,10 +169,8 @@ function classifyRow(s: { id: string; title: string }) {
   markPending(s.id);
   // Fire-and-forget, but keep re-sending until a verdict lands. This handles
   // the case where the page was opened before the model finished downloading:
-  // the background ensures the host exists on every classify, and once ready
-  // the host starts answering these re-sends. (The explicit ensure-host below
-  // is a belt-and-suspenders nudge for a not-yet-woken background.)
-  mkSend(s.id);
+  // the background creates/keeps the worker on every classify, and once ready
+  // it starts answering these re-sends.
   let tries = 0;
   const iv = setInterval(() => {
     if (verdicts.has(s.id) || ++tries > 60) {

@@ -5,13 +5,16 @@
   "scripts": {
     "build": "node build.mjs",
     "watch": "node build.mjs --watch",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test": "node --test tests/bundles.test.mjs",
+    "test:browser": "node --test --test-concurrency=1 tests/browser.test.mjs"
   },
   "dependencies": {
     "react-native-nobodywho": "file:../../nobodywho/nobodywho/js"
   },
   "devDependencies": {
     "esbuild": "^0.24.0",
+    "selenium-webdriver": "^4.54.0",
     "typescript": "^5.6.0"
   },
   "allowScripts": {

@@ -37,25 +37,24 @@ const classicEntries = {
   background: join(root, "src/background.ts"),
   content: join(root, "src/content.ts"),
 };
-// ES module contexts — <script type="module"> pages.
+// ES module contexts — the popup page and the background-spawned host worker.
 const moduleEntries = {
-  "offscreen/offscreen": join(root, "src/offscreen/offscreen.ts"),
   "popup/popup": join(root, "src/popup/popup.ts"),
+  "host-worker": join(root, "src/host-worker.ts"),
 };
 
 async function main() {
   // Start from a clean dist so a stale/mixed artifact can never be served.
   rmSync(outbase, { recursive: true, force: true });
-  mkdirSync(join(outbase, "offscreen"), { recursive: true });
   mkdirSync(join(outbase, "popup"), { recursive: true });
 
   // static assets
-  cpSync(join(root, "src/offscreen/offscreen.html"), join(outbase, "offscreen/offscreen.html"));
   cpSync(join(root, "src/popup/popup.html"), join(outbase, "popup/popup.html"));
   cpSync(join(root, "src/popup/popup.css"), join(outbase, "popup/popup.css"));
 
-  // the nobodywho wasm binary, next to the offscreen bundle (located via import.meta.url)
-  cpSync(NW_WASM, join(outbase, "offscreen/nobodywho_minimal.wasm"));
+  // the nobodywho wasm binary, next to the host-worker bundle (located via
+  // import.meta.url from the emscripten glue).
+  cpSync(NW_WASM, join(outbase, "nobodywho_minimal.wasm"));
 
   const buildClassic = () => build({ ...esbuildOpts, format: "iife", entryPoints: classicEntries, outdir: outbase });
   const buildModule = () => build({ ...esbuildOpts, format: "esm", entryPoints: moduleEntries, outdir: outbase });
@@ -82,13 +81,13 @@ const FORBIDDEN_IN_PAGE_BUNDLE = [
 const MIN_WASM_BYTES = 100 * 1024 * 1024;
 
 function verify() {
-  const bundle = readFileSync(join(outbase, "offscreen/offscreen.js"), "utf8");
+  const bundle = readFileSync(join(outbase, "host-worker.js"), "utf8");
   for (const s of FORBIDDEN_IN_PAGE_BUNDLE) {
     if (bundle.includes(s)) {
       throw new Error(`build guard: offscreen bundle contains node-only FS glue (${JSON.stringify(s)}). Aborting.`);
     }
   }
-  const wasm = join(outbase, "offscreen/nobodywho_minimal.wasm");
+  const wasm = join(outbase, "nobodywho_minimal.wasm");
   const size = statSync(wasm).size;
   if (size < MIN_WASM_BYTES) {
     throw new Error(`build guard: wasm too small (${size} bytes) — likely a truncated/stale copy.`);

@@ -1,81 +1,86 @@
-// MV3 background. Owns the offscreen inference host across browser lifecycles
-// and relays settings. Fireflight fallback: open the host page in a hidden tab.
+// MV3 background. Owns the inference **host worker** (a dedicated thread, so the
+// extension process is never blocked), relays messages between content scripts
+// and the worker, persists model status, relays settings, and tallies verdicts.
 import { MODES, DEFAULT_THRESHOLD } from "./shared/config";
 import { safeSend } from "./shared/messaging";
 
 declare const chrome: any;
 
-const OFFSCREEN_REASON = "WORKERS" as const; // we host a running inference worker/module
-const OFFSCREEN_URL = "dist/offscreen/offscreen.html";
+const WORKER_URL = "dist/host-worker.js";
 
-let hostTabId: number | null = null;
-const HOST_TAB_KEY = "hidenews.hostTabId";
+let worker: Worker | null = null;
+let modelStatus: Record<string, unknown> = { status: "idle" };
 
-let creating: Promise<void> | null = null;
-
-async function ensureHost() {
-  if (creating) return creating;
-  creating = (async () => {
-    // Chrome: real offscreen document.
-    if (typeof chrome.offscreen !== "undefined") {
-      const has = await chrome.offscreen.hasDocument();
-      if (!has) {
-        await chrome.offscreen.createDocument({
-          url: OFFSCREEN_URL,
-          reasons: [OFFSCREEN_REASON],
-          justification: "Run an on-device Laya model to classify HN stories.",
-        });
-      }
-      return;
-    }
-    // Firefox fallback: hidden tab hosting the same page. Remember its id in
-    // storage so we reuse it across restarts instead of piling up duplicates.
-    const stored = await chrome.storage.local.get([HOST_TAB_KEY]);
-    if (stored[HOST_TAB_KEY] != null) {
-      try {
-        const t = await chrome.tabs.get(stored[HOST_TAB_KEY]);
-        if (t?.id) {
-          hostTabId = t.id;
-          return;
-        }
-      } catch {
-        // tab no longer exists — create a fresh one below
-      }
-    }
-    const tab = await chrome.tabs.create({ url: chrome.runtime.getURL(OFFSCREEN_URL), active: false });
-    hostTabId = tab.id;
-    chrome.storage.local.set({ [HOST_TAB_KEY]: tab.id });
-  })().finally(() => {
-    creating = null;
-  });
-  return creating;
+function persistStatus() {
+  try {
+    chrome.storage?.local?.set({
+      "hn.model": {
+        status: modelStatus.status,
+        message: modelStatus.message ?? null,
+        downloaded: modelStatus.downloaded ?? 0,
+        total: modelStatus.total ?? 0,
+        at: Date.now(),
+      },
+    });
+  } catch {}
 }
 
-// Host is created **on demand**: the background never opens a tab on its own
-// (so reloading the script doesn't spawn a hidden tab). A content script asks
-// us to create the host via an "ensure-host" message once it can't reach one.
-chrome.runtime.onMessage.addListener((msg: any, _sender: unknown, sendResponse: (v?: unknown) => void) => {
-  if (msg?.kind === "ensure-host") {
-    ensureHost().then(() => sendResponse({ ok: true }));
-    return true;
+function ensureWorker(): Worker | null {
+  if (worker) return worker;
+  let w: Worker;
+  try {
+    w = new Worker(chrome.runtime.getURL(WORKER_URL), { type: "module" });
+  } catch (e) {
+    console.error("[hidenews bg] could not start worker:", e);
+    modelStatus = { status: "error", message: String(e) };
+    persistStatus();
+    return null;
   }
-  if (msg?.kind === "classify") {
-    // classic is handled directly by the host, but the background's own
-    // onMessage listener would otherwise swallow it (content sees a receiver,
-    // so its "no host" retry never fires). Ensure the host exists here.
-    ensureHost();
-  }
-  if (msg?.kind === "verdict") {
-    // the background *does* receive every classification result (the host
-    // broadcasts it to all contexts); tally it and keep it visible.
+  w.onmessage = (e: MessageEvent) => onWorkerMessage(e.data);
+  w.onerror = (e: ErrorEvent) => {
+    console.error("[hidenews bg] worker error:", e?.message);
+    try {
+      w.terminate();
+    } catch {}
+    worker = null;
+    modelStatus = { status: "error", message: e?.message ?? "worker crashed" };
+    persistStatus();
+  };
+  worker = w;
+  worker.postMessage({ kind: "init" });
+  return worker;
+}
+
+function onWorkerMessage(msg: any) {
+  if (!msg) return;
+  if (msg.kind === "model-status") {
+    modelStatus = msg;
+    persistStatus();
+    safeSend({ kind: "model-status", ...msg });
+  } else if (msg.kind === "verdict") {
     tally(msg.id, msg.p);
+    safeSend({ kind: "verdict", id: msg.id, p: msg.p });
+  } else if (msg.kind === "status") {
+    console.log("[hidenews bg]", msg.text);
   }
-  if (msg?.kind === "model-status") {
-    console.log("[hidenews bg] model status:", msg.status);
+}
+
+chrome.runtime.onMessage.addListener((msg: any, _sender: unknown, sendResponse: (v?: unknown) => void) => {
+  if (msg?.kind === "classify") {
+    const w = ensureWorker();
+    if (w) w.postMessage({ kind: "classify", id: msg.id, title: msg.title });
+  } else if (msg?.kind === "get-status") {
+    sendResponse({
+      status: modelStatus.status,
+      message: modelStatus.message ?? undefined,
+      downloaded: modelStatus.downloaded ?? undefined,
+      total: modelStatus.total ?? undefined,
+    });
+    return true;
   }
 });
 
-// ---- classification tally (so the background demonstrably gets the data) ----
+// ---- classification tally ----
 let classified = 0;
 chrome.storage.local.get(["hn.stats"], (v: any) => {
   classified = v?.["hn.stats"]?.classified ?? 0;
@@ -86,7 +91,7 @@ function tally(id: string, p: number) {
   chrome.storage.local.set({ "hn.stats": { classified, at: Date.now() } }, () => {});
 }
 
-// Broadcast setting changes to the host so it can react (e.g. threshold).
+// Relay setting changes to content scripts.
 chrome.storage.onChanged.addListener((changes: any, area: string) => {
   if (area !== "local") return;
   const pack: Record<string, unknown> = {};
@@ -98,7 +103,7 @@ chrome.storage.onChanged.addListener((changes: any, area: string) => {
   }
 });
 
-// Default settings is stored once (fallback for browsers without storage.sync).
+// Default settings stored once.
 chrome.storage.local.get(["mode", "threshold"], (v: any) => {
   if (v.mode === undefined) chrome.storage.local.set({ mode: MODES.HIDE_AI, threshold: DEFAULT_THRESHOLD });
 });
