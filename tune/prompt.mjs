@@ -120,8 +120,29 @@ export const HIDE_AI_PROMPT_DEFLATED_NEG2 = {
   },
 };
 
-/** The prompt the extension will use (updated by the tuning sweep). */
-export const HIDE_AI_PROMPT = HIDE_AI_PROMPT_SIMPLE;
+// Best result: a 3-option *choice* with an explicit AI-adjacent bucket.
+export const HIDE_AI_PROMPT_CHOICE3 = {
+  is_ai: {
+    type: "choice",
+    instructions: "Classify this story's subject.",
+    criteria: {
+      ai: "AI/LLM technology",
+      ai_adj: "AI-adjacent (Nvidia, AI hardware, agent tooling)",
+      not_ai: "not AI at all",
+    },
+  },
+};
+
+/**
+ * The prompt the extension will use.
+ * For the `choice` above, treat the story as “about AI” when the probability
+ * of the `ai` option is ≥ DOC_THRESHOLD.
+ */
+export const HIDE_AI_PROMPT = HIDE_AI_PROMPT_CHOICE3;
+
+export const AI_CHOICE_KEY = "ai";
+
+export const DOC_THRESHOLD = 0.5;
 
 /** Default probability at/above which a story is treated as "about AI". */
 export const DEFAULT_THRESHOLD = 0.5;
