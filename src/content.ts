@@ -211,7 +211,10 @@ function classifyRow(s: { id: string; title: string }) {
 }
 
 function classifyAll() {
-  for (const row of storyRows()) {
+  // Send in REVERSE page order (bottom story first) so the top/first story is
+  // enqueued last and thus sits at the front of the background's FILO queue,
+  // getting processed first.
+  for (const row of [...storyRows()].reverse()) {
     const s = storyFor(row);
     if (s) classifyRow(s);
   }
