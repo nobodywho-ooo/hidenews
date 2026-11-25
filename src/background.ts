@@ -1,6 +1,7 @@
 // MV3 background. Owns the offscreen inference host across browser lifecycles
 // and relays settings. Fireflight fallback: open the host page in a hidden tab.
 import { MODES, DEFAULT_THRESHOLD } from "./shared/config";
+import { safeSend } from "./shared/messaging";
 
 declare const chrome: any;
 
@@ -68,7 +69,7 @@ chrome.storage.onChanged.addListener((changes: any, area: string) => {
     if (changes[key]) pack[key] = changes[key].newValue;
   }
   if (Object.keys(pack).length) {
-    chrome.runtime.sendMessage({ kind: "set-settings", ...pack });
+    safeSend({ kind: "set-settings", ...pack });
   }
 });
 

@@ -1,4 +1,5 @@
 import { MODES, DEFAULT_THRESHOLD } from "../shared/config";
+import { safeSend } from "../shared/messaging";
 
 declare const chrome: any;
 
@@ -67,7 +68,7 @@ function pollStatus() {
     });
   } catch {}
   try {
-    chrome.runtime.sendMessage({ kind: "get-status" }, (res: any) => {
+    safeSend({ kind: "get-status" }, (res: any) => {
       if (res) setModelStatus(res);
     });
   } catch {}

@@ -3,6 +3,7 @@
 // hidden (but keeping their space) when the active mode says so.
 
 import { MODES, DEFAULT_THRESHOLD, type Mode } from "./shared/config";
+import { safeSend } from "./shared/messaging";
 
 declare const chrome: any;
 
@@ -143,7 +144,7 @@ function log(u: string) {
 }
 
 function mkSend(id: string) {
-  chrome.runtime.sendMessage({ kind: "ensure-host" }, () => {
+  safeSend({ kind: "ensure-host" }, () => {
     void chrome.runtime.lastError; // background may not exist yet; host also will retry
   });
 }
@@ -175,7 +176,7 @@ function classifyRow(s: { id: string; title: string }) {
   const trySend = () => {
     // fire-and-forget: the verdict comes back as a broadcast. Only retry when
     // there's genuinely no receiver (host not created yet).
-    chrome.runtime.sendMessage({ kind: "classify", id: s.id, title: s.title }, () => {
+    safeSend({ kind: "classify", id: s.id, title: s.title }, () => {
       const em = chrome.runtime.lastError?.message ?? "";
       const noHost = /Receiving end does not exist|Could not establish connection/.test(em);
       if (noHost) {

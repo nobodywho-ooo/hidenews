@@ -5,6 +5,7 @@
 
 import { Decision } from "react-native-nobodywho";
 import { MODEL_PATH, PROMPT, AI_CHOICE_KEY, DEFAULT_THRESHOLD } from "../shared/config";
+import { safeSend } from "../shared/messaging";
 import type { ClassifyRequestMsg, GetStatusMsg } from "../shared/types";
 
 declare const chrome: any; // avoid needing @types/chrome everywhere
@@ -28,7 +29,7 @@ function setStatus(text: string) {
 }
 
 function broad(modelStatus: string, extra?: Record<string, unknown>) {
-  chrome.runtime?.sendMessage({ kind: "model-status", status: modelStatus, ...extra });
+  safeSend({ kind: "model-status", status: modelStatus, ...extra });
   // persist so the popup / content can read status without messaging us
   try {
     chrome.storage?.local?.set({
@@ -94,9 +95,7 @@ chrome.runtime.onMessage.addListener((msg: any, _sender: unknown, sendResponse: 
       .then((verdict) => {
         // fire-and-forget broadcast; never hold the message port open, so page
         // unload/reload isn't blocked while a batch is classifying.
-        try {
-          chrome.runtime.sendMessage({ kind: "verdict", id: verdict.id, p: verdict.p });
-        } catch {}
+        safeSend({ kind: "verdict", id: verdict.id, p: verdict.p });
         setStatus(`classified #${verdict.id} (${(verdict.p * 100).toFixed(0)}%)`);
       })
       .catch((e) => {
@@ -104,7 +103,7 @@ chrome.runtime.onMessage.addListener((msg: any, _sender: unknown, sendResponse: 
       });
   }
   if (msg?.kind === "set-settings") {
-    chrome.runtime.sendMessage({ kind: "settings-changed", ...msg });
+    safeSend({ kind: "settings-changed", ...msg });
   }
 });
 
