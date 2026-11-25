@@ -20,7 +20,7 @@ const esbuildOpts = {
   bundle: true,
   platform: "browser",
   target: ["chrome95", "firefox115"],
-  sourcemap: true,
+  sourcemap: false, // devtools can't resolve these from the wasm-async worker load; silence the noise
   alias: { "react-native-nobodywho": NW_ENTRY },
   // node builtins are only touched on the Node path (guarded at runtime in the
   // browser), so keep them un-bundled.
