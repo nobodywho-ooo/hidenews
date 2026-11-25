@@ -1,7 +1,7 @@
 // Build the MV3 extension with esbuild: bundle each entry, copy static
 // assets (offscreen.html, popup.html/css, the nobodywho wasm binary).
 import { build, context } from "esbuild";
-import { cpSync, mkdirSync, rmSync } from "node:fs";
+import { cpSync, mkdirSync, readFileSync, rmSync, statSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -68,8 +68,32 @@ async function main() {
   } else {
     await buildClassic();
     await buildModule();
+    verify();
   }
-  console.log(`build complete → ${outbase}`);
+}
+
+// Sanity gates so a regression can never silently reach the browser:
+// 1) the page bundle must not contain node-FS raw-fs glue (e.g. the
+//    NODERAWFS throw), and 2) the copied wasm must actually be non-trivial.
+const FORBIDDEN_IN_PAGE_BUNDLE = [
+  "NODERAWFS is currently only supported on Node.js environment",
+  "only supported in the Node.js environment",
+];
+const MIN_WASM_BYTES = 100 * 1024 * 1024;
+
+function verify() {
+  const bundle = readFileSync(join(outbase, "offscreen/offscreen.js"), "utf8");
+  for (const s of FORBIDDEN_IN_PAGE_BUNDLE) {
+    if (bundle.includes(s)) {
+      throw new Error(`build guard: offscreen bundle contains node-only FS glue (${JSON.stringify(s)}). Aborting.`);
+    }
+  }
+  const wasm = join(outbase, "offscreen/nobodywho_minimal.wasm");
+  const size = statSync(wasm).size;
+  if (size < MIN_WASM_BYTES) {
+    throw new Error(`build guard: wasm too small (${size} bytes) — likely a truncated/stale copy.`);
+  }
+  console.log(`guard: ok (bundle clean, wasm ${(size / 1048576).toFixed(0)} MB)`);
 }
 
 main().catch((e) => {

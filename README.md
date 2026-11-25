@@ -48,6 +48,16 @@ The build copies that wasm next to the offscreen bundle and bundles:
 Question = 3-option `choice` (ai / ai-adjacent / not_ai), threshold 0.5 — identical to
 `ideas/tune/prompt.mjs`. Change it in `src/shared/config.ts` and rebuild.
 
+## Reloading after a rebuild (avoid stale artifacts)
+
+Firefox's "Reload" on a temporary add-on can keep serving old pages/resources
+(especially the ~366 MB wasm). After `npm run build`, do a **clean re-load**:
+`about:debugging#/runtime/this-firefox` → **Remove** the add-on → close any leftover
+*hidenews inference host* tab → **Load Temporary Add-on** → `manifest.json`.
+`npm run build` also wipes `dist/` first and runs a build guard that fails if the
+offscreen bundle ever contains node-only FS glue (e.g. a `NODERAWFS` throw), so a
+regression breaks at build time instead of silently at runtime.
+
 ## Known caveats / to verify in the browser test
 
 - **Eval/CSP:** esbuild warns about a `direct eval` inside emscripten's glue. MV3 extension pages
