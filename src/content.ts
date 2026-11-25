@@ -187,27 +187,30 @@ function classifyRow(s: { id: string; title: string }) {
   inflight.add(s.id);
   requested.add(s.id); // so we can decrement its refcount when we leave
   markPending(s.id);
-  // Send exactly once; the background acks immediately and owns the queue. The
-  // verdict comes back via broadcast, and we ALSO poll the versioned store so a
-  // missed broadcast can't keep a row pending.
+  // Send exactly once; the background acks immediately and owns the queue.
+  // Delivery to this page happens via the fast poller below (and, when it works,
+  // the verdict broadcast).
   safeSend({ kind: "classify", id: s.id, title: s.title });
-  const key = cacheStorageKey(s.id);
-  const iv = setInterval(() => {
-    if (verdicts.has(s.id)) {
-      clearInterval(iv);
-      inflight.delete(s.id);
-      return;
-    }
-    try {
-      chrome.storage.local.get([key], (v: any) => {
-        if (typeof v?.[key] === "number") onVerdict(s.id, v[key]);
-      });
-    } catch {}
-  }, 5000);
-  setTimeout(() => {
-    clearInterval(iv);
-    inflight.delete(s.id);
-  }, 120000); // backstop: don't poll forever
+}
+
+// Fast shared poller: every ~300 ms reads the versioned verdict keys for all
+// pending ids in one storage.get — this is what actually delivers verdicts to
+// the page (broadcasts from the background have proven unreliable here), and it
+// makes each story pop as it completes instead of batching every few seconds.
+let pollerStarted = false;
+function startPoller() {
+  if (pollerStarted) return;
+  pollerStarted = true;
+  setInterval(() => {
+    if (inflight.size === 0) return;
+    const keys = [...inflight].map(cacheStorageKey);
+    chrome.storage.local.get(keys, (v: any) => {
+      for (const id of [...inflight]) {
+        const p = v?.[cacheStorageKey(id)];
+        if (typeof p === "number") onVerdict(id, p); // onVerdict clears inflight
+      }
+    });
+  }, 300);
 }
 
 function classifyAll() {
@@ -264,6 +267,7 @@ chrome.runtime.onMessage.addListener((msg: any) => {
   }
 });
 
+startPoller(); // begin delivering verdicts independently of page-timing
 loadCached().then(() => {
   if (document.readyState === "loading") {
     document.addEventListener("DOMContentLoaded", observe);
