@@ -63,16 +63,24 @@ function applyVerdict(id: string, p: number) {
   const isAi = p >= threshold;
   const hide = mode === MODES.ONLY_AI ? !isAi : isAi;
 
-  // tint background from green (0) to red (1)
+  // proportional tint: green (not AI) → red (AI), by P(ai)
   const hue = 120 - p * 120;
-  const tint = `hsla(${hue}, 70%, 50%, ${0.08 + p * 0.12})`;
+  const tint = `hsla(${hue}, 70%, 50%, ${0.06 + p * 0.10})`;
 
   for (const row of rows) {
     row.classList.remove(THROB);
-    row.style.background = tint;
-    // blur/dim to "hide" without removing — rows keep their space via layout.
-    row.style.filter = hide ? "blur(2px) brightness(0.82) saturate(0.7)" : "none";
-    row.style.opacity = hide ? "0.45" : "1";
+    row.style.filter = "none";
+    row.style.opacity = "1";
+    if (hide) {
+      // hidden (AI in Hide-AI mode): red, not blurred, keeps its space.
+      row.style.background = "linear-gradient(to right, rgba(190,30,20,0.30), rgba(190,30,20,0.10))";
+      row.style.boxShadow = "inset 0 0 0 1px rgba(160,20,15,0.35), inset 3px 0 0 #b3261e";
+      row.classList.add("hidenews-ai");
+    } else {
+      row.style.background = tint;
+      row.style.boxShadow = "none";
+      row.classList.remove("hidenews-ai");
+    }
   }
 
   start.dataset.hidenews = hide ? "hidden" : "visible";
