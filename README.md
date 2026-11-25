@@ -60,9 +60,10 @@ regression breaks at build time instead of silently at runtime.
 
 ## Known caveats / to verify in the browser test
 
-- **Eval/CSP:** esbuild warns about a `direct eval` inside emscripten's glue. MV3 extension pages
-  disallow `eval`. If the wasm load path `chrome.extension_pages` CSP blocks it, we'll see an error in
-  the offscreen document console; likely only an asm.js/source-map path that normal wasm never hits.
+- **WASM CSP (fixed):** MV3 extension pages block `WebAssembly` under the default `script-src 'self'`
+  policy — that's what kept the host from ever loading the model. Solved by adding
+  `"content_security_policy": { "extension_pages": "script-src 'self' 'wasm-unsafe-eval'; object-src 'self'" }`
+  to the manifest (`wasm-unsafe-eval` permits wasm without allowing arbitrary `eval`).
 - **Firefox offscreen:** Chrome uses `chrome.offscreen.createDocument`. If `.offscreen` is unavailable
   in the Firefox version we test against, `background.js` falls back to opening the host page in a
   hidden tab. Confirm the fallback path in Firefox.
