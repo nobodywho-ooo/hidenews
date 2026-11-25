@@ -156,6 +156,23 @@ function onVerdict(id: string, p: number) {
   log(`model ${(document.documentElement.dataset.hidenewsModel ?? "?")} · verdict #${id} = ${(p * 100).toFixed(0)}%`);
 }
 
+function onError(id: string) {
+  inflight.delete(id);
+  const rows = storyBlock(id);
+  if (rows.length === 0) return;
+  for (const row of rows) {
+    row.classList.remove(THROB);
+    row.style.filter = "none";
+    row.style.opacity = "1";
+    row.style.background = "hsla(0, 0%, 0%, 0.04)";
+    row.style.boxShadow = "none";
+    row.classList.remove("hidenews-ai");
+  }
+  rows[0].dataset.hidenews = "error";
+  rows[0].title = "hidenews: could not classify (model unavailable)";
+  log(`error #${id}`);
+}
+
 function classifyRow(s: { id: string; title: string }) {
   if (verdicts.has(s.id)) {
     applyVerdict(s.id, verdicts.get(s.id)!);
@@ -217,6 +234,10 @@ function observe() {
 chrome.runtime.onMessage.addListener((msg: any) => {
   if (msg?.kind === "verdict") {
     onVerdict(msg.id, msg.p);
+    return;
+  }
+  if (msg?.kind === "classify-error") {
+    onError(msg.id);
     return;
   }
   if (msg?.kind === "model-status") {

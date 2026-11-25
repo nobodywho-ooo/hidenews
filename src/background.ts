@@ -4,6 +4,8 @@
 //   message channel
 // - queue items are refcounted per page; a page releases its ids on leave
 // - verdicts are broadcast so every pending HN page gets them
+// - items queue while the model loads; nothing is dispatched before it's ready
+// - if the model fails to load, an error is passed back to the waiting pages
 // - the queue/cache live here (never on the worker), so we can later run more
 //   workers against the same queue.
 import { MODES, DEFAULT_THRESHOLD, CACHE_VERSION, cacheStorageKey } from "./shared/config";
@@ -15,33 +17,22 @@ const WORKER_URL = "dist/host-worker.js";
 
 let worker: Worker | null = null;
 let modelStatus: Record<string, unknown> = { status: "idle" };
+let modelReady = false;
+let modelError: string | null = null;
+let inFlightId: string | null = null;
 
 // ---- verdict cache (in-memory for this run; persisted, version-stamped) ----
 const cache = new Map<string, number>();
 const CACHE_MAX = 3000;
 
 // ---- FILO queue ----
-// `queue` is the order (index 0 = next to process); new ids go to the front and
-// existing ids are moved to the front = "most recent first". Items are keyed by
-// story id and refcount number of pages still waiting on them.
+// index 0 = next to process; new ids go to the front, existing ids move to the
+// front ("most recent first"). Items keyed by story id, refcounted per page.
 const queue: string[] = [];
-const items = new Map<string, { id: string; title: string; refCount: number }>();
+const items = new Map<string, { id: string; title: string; refCount: number; retries: number }>();
+const MAX_RETRIES = 2;
 
 let processing = false;
-
-function persistStatus() {
-  try {
-    chrome.storage?.local?.set({
-      "hn.model": {
-        status: modelStatus.status,
-        message: modelStatus.message ?? null,
-        downloaded: modelStatus.downloaded ?? 0,
-        total: modelStatus.total ?? 0,
-        at: Date.now(),
-      },
-    });
-  } catch {}
-}
 
 // ---- cache: load/persist (namespaced by CACHE_VERSION) ----
 function loadCache() {
@@ -72,9 +63,20 @@ function pruneCache() {
   try {
     chrome.storage.local.get(null, (all: any) => {
       const keys = Object.keys(all).filter((k) => k.startsWith(`cv:`));
-      if (keys.length > CACHE_MAX) {
-        chrome.storage.local.remove(keys.slice(0, keys.length - CACHE_MAX));
-      }
+      if (keys.length > CACHE_MAX) chrome.storage.local.remove(keys.slice(0, keys.length - CACHE_MAX));
+    });
+  } catch {}
+}
+function persistStatus() {
+  try {
+    chrome.storage?.local?.set({
+      "hn.model": {
+        status: modelStatus.status,
+        message: modelError ?? modelStatus.message ?? null,
+        downloaded: modelStatus.downloaded ?? 0,
+        total: modelStatus.total ?? 0,
+        at: Date.now(),
+      },
     });
   } catch {}
 }
@@ -85,8 +87,12 @@ function moveToFront(id: string) {
   if (i >= 0) queue.splice(i, 1);
   queue.unshift(id);
 }
+function removeFromQueue(id: string) {
+  const i = queue.indexOf(id);
+  if (i >= 0) queue.splice(i, 1);
+}
 
-/** Enqueue a story for classification unless already cached. */
+/** Enqueue a story unless already cached. Dispatches only when the model is ready. */
 function enqueue(id: string, title: string): boolean {
   if (cache.has(id)) return false; // already classified — never requeue
   const existing = items.get(id);
@@ -94,7 +100,7 @@ function enqueue(id: string, title: string): boolean {
     existing.refCount++;
     moveToFront(id);
   } else {
-    items.set(id, { id, title, refCount: 1 });
+    items.set(id, { id, title, refCount: 1, retries: 0 });
     moveToFront(id);
   }
   pump();
@@ -109,8 +115,7 @@ function release(ids: string[]) {
       item.refCount--;
       if (item.refCount <= 0) {
         items.delete(id);
-        const i = queue.indexOf(id);
-        if (i >= 0) queue.splice(i, 1);
+        removeFromQueue(id);
       }
     }
   }
@@ -124,8 +129,7 @@ function ensureWorker(): Worker | null {
     w = new Worker(chrome.runtime.getURL(WORKER_URL), { type: "module" });
   } catch (e) {
     console.error("[hidenews bg] could not start worker:", e);
-    modelStatus = { status: "error", message: String(e) };
-    persistStatus();
+    setModelError(String(e));
     return null;
   }
   w.onmessage = (e: MessageEvent) => onWorkerMessage(e.data);
@@ -135,10 +139,14 @@ function ensureWorker(): Worker | null {
       w.terminate();
     } catch {}
     worker = null;
+    const lost = inFlightId;
+    inFlightId = null;
     processing = false;
-    modelStatus = { status: "error", message: e?.message ?? "worker crashed" };
-    persistStatus();
-    pump(); // restart work on a fresh worker
+    if (lost) {
+      const item = items.get(lost);
+      if (item) moveToFront(lost); // requeue the lost in-flight item
+    }
+    pump();
   };
   worker = w;
   worker.postMessage({ kind: "init" });
@@ -146,7 +154,7 @@ function ensureWorker(): Worker | null {
 }
 
 function pump() {
-  if (processing) return;
+  if (processing || !modelReady) return; // queue first; dispatch once loading is done
   if (queue.length === 0) return;
   const id = queue.shift();
   if (id === undefined) return;
@@ -158,30 +166,79 @@ function pump() {
   }
   const w = ensureWorker();
   if (!w) {
-    items.delete(id);
-    processing = false;
-    pump();
+    moveToFront(id); // can't dispatch — keep queued
     return;
   }
   processing = true;
+  inFlightId = id;
   w.postMessage({ kind: "classify", id, title: item.title });
+}
+
+function done(id: string) {
+  if (inFlightId === id) inFlightId = null;
+  processing = false;
+  pump();
+}
+
+function setModelError(message: string) {
+  modelReady = false;
+  modelError = message;
+  modelStatus = { status: "error", message };
+  persistStatus();
+  // tell every waiting page the model failed to load
+  errorOutQueue();
+}
+
+function errorOutQueue() {
+  const m = modelError ?? modelStatus.message ?? "model unavailable";
+  for (const id of [...queue]) {
+    items.delete(id);
+    removeFromQueue(id);
+    safeSend({ kind: "classify-error", id, error: m });
+  }
+  if (inFlightId) {
+    const id = inFlightId;
+    inFlightId = null;
+    items.delete(id);
+    safeSend({ kind: "classify-error", id, error: m });
+  }
+  processing = false;
 }
 
 function onWorkerMessage(msg: any) {
   if (!msg) return;
   if (msg.kind === "model-status") {
     modelStatus = msg;
+    if (msg.status === "ready") {
+      modelReady = true;
+      modelError = null;
+      pump();
+    } else if (msg.status === "error") {
+      setModelError(msg.message ?? "model failed to load");
+    }
     persistStatus();
     safeSend({ kind: "model-status", ...msg });
   } else if (msg.kind === "verdict") {
-    // cache it, drop the queue item, and tell every pending page.
     items.delete(msg.id);
-    const qi = queue.indexOf(msg.id);
-    if (qi >= 0) queue.splice(qi, 1);
+    removeFromQueue(msg.id);
     rememberVerdict(msg.id, msg.p);
     safeSend({ kind: "verdict", id: msg.id, p: msg.p });
-    processing = false;
-    pump();
+    done(msg.id);
+  } else if (msg.kind === "classify-error") {
+    const item = items.get(msg.id);
+    if (modelError) {
+      items.delete(msg.id);
+      removeFromQueue(msg.id);
+      safeSend({ kind: "classify-error", id: msg.id, error: modelError });
+    } else if (item && (item.retries || 0) < MAX_RETRIES) {
+      item.retries++;
+      moveToFront(msg.id); // transient failure — retry later
+    } else {
+      items.delete(msg.id);
+      removeFromQueue(msg.id);
+      safeSend({ kind: "classify-error", id: msg.id, error: msg.error ?? "inference failed" });
+    }
+    done(msg.id);
   } else if (msg.kind === "status") {
     console.log("[hidenews bg]", msg.text);
   }
@@ -190,9 +247,11 @@ function onWorkerMessage(msg: any) {
 chrome.runtime.onMessage.addListener((msg: any, _sender: unknown, sendResponse: (v?: unknown) => void) => {
   if (msg?.kind === "classify") {
     if (!enqueue(msg.id, msg.title)) {
-      // cached — answer immediately from the cache too (the page may have missed
-      // the broadcast on this load)
+      // cached — answer immediately too (page may have missed the broadcast)
       safeSend({ kind: "verdict", id: msg.id, p: cache.get(msg.id)! });
+    } else if (modelError) {
+      // model failed to load: pass the error to this page now.
+      safeSend({ kind: "classify-error", id: msg.id, error: modelError });
     }
     sendResponse({ ok: true }); // immediate ack: data is durably handled
     return;
@@ -205,7 +264,7 @@ chrome.runtime.onMessage.addListener((msg: any, _sender: unknown, sendResponse: 
   if (msg?.kind === "get-status") {
     sendResponse({
       status: modelStatus.status,
-      message: modelStatus.message ?? undefined,
+      message: modelError ?? modelStatus.message ?? undefined,
       downloaded: modelStatus.downloaded ?? undefined,
       total: modelStatus.total ?? undefined,
     });
@@ -220,9 +279,7 @@ chrome.storage.onChanged.addListener((changes: any, area: string) => {
   for (const key of ["mode", "threshold"]) {
     if (changes[key]) pack[key] = changes[key].newValue;
   }
-  if (Object.keys(pack).length) {
-    safeSend({ kind: "set-settings", ...pack });
-  }
+  if (Object.keys(pack).length) safeSend({ kind: "set-settings", ...pack });
 });
 
 chrome.storage.local.get(["mode", "threshold"], (v: any) => {

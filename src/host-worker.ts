@@ -58,7 +58,9 @@ self.onmessage = (e: any) => {
       queue = queue
         .then(() => classify(msg.id, msg.title))
         .then((v) => post({ kind: "verdict", id: v.id, p: v.p }))
-        .catch((err) => post({ kind: "status", text: `classify #${msg.id} failed: ${err}` }));
+        .catch((err) =>
+          post({ kind: "classify-error", id: msg.id, error: String((err as any)?.message ?? err) }),
+        );
     }
   }
 };
