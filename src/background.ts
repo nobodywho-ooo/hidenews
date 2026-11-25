@@ -59,6 +59,12 @@ chrome.runtime.onMessage.addListener((msg: any, _sender: unknown, sendResponse: 
     ensureHost().then(() => sendResponse({ ok: true }));
     return true;
   }
+  if (msg?.kind === "classify") {
+    // classic is handled directly by the host, but the background's own
+    // onMessage listener would otherwise swallow it (content sees a receiver,
+    // so its "no host" retry never fires). Ensure the host exists here.
+    ensureHost();
+  }
 });
 
 // Broadcast setting changes to the host so it can react (e.g. threshold).
