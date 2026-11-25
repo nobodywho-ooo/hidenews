@@ -2,7 +2,7 @@
   {
     "url": "https://www.cnbc.com/2026/11/23/nvidia-jensen-huang-ceo.html",
     "title": "Nvidia Reinstates Jensen Huang as CEO",
-    "expected": "not-ai"
+    "expected": "ai"
   },
   {
     "url": "https://spelunkr.tv",
@@ -32,7 +32,7 @@
   {
     "url": "https://nvidianews.nvidia.com/news/nvidia-board-reinstates-jensen-huang-as-president-ceo-and-board-director",
     "title": "Jensen Huang Reinstated as Nvidia CEO",
-    "expected": "not-ai"
+    "expected": "ai"
   },
   {
     "url": "https://stalw.art/blog/microsoft-exchange-replacement/",
@@ -77,7 +77,7 @@
   {
     "url": "https://github.com/os6/nospeaker",
     "title": "Nospeaker \u2500 Make your MacBook's trackpad talk using its haptic motor",
-    "expected": "not-ai"
+    "expected": "ai"
   },
   {
     "url": "https://fosscomics.com/posts/16.%20BSD%20Unix%20Part%206%20-%20The%20Struggle%20for%20Freedom/",
@@ -92,12 +92,12 @@
   {
     "url": "https://github.com/mikuta0407/win4wine",
     "title": "Win4wine \u2013 Run Windows Shell as the Linux Desktop on Wine",
-    "expected": "not-ai"
+    "expected": "ai"
   },
   {
     "url": "https://micjm.com/blog/yes-17m-lines-of-lean-is-a-lot/",
     "title": "Yes, 17M lines of Lean is a lot",
-    "expected": "not-ai"
+    "expected": "ai"
   },
   {
     "url": "https://alvinbunk.wordpress.com/2026/11/01/nespresso-project-olympus/",
@@ -107,7 +107,7 @@
   {
     "url": "https://pengowray.github.io/riemann-zeta-proof-visualizer/",
     "title": "Treemap of the Riemann Hypothesis Lean Proof",
-    "expected": "not-ai"
+    "expected": "ai"
   },
   {
     "url": "https://github.com/glushchenko/fsnotes/discussions/2056",

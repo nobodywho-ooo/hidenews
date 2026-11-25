@@ -52,7 +52,7 @@
   {
     "url": "https://github.com/Zagitta/gpu-unlock",
     "title": "GPU-unlock: FP/BF16 instruction issue rate on Nvidia 3000's cards",
-    "expected": "not-ai"
+    "expected": "ai"
   },
   {
     "url": "https://blog.roku.com/developer/gitlab-move",
