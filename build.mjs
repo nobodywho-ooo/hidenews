@@ -1,6 +1,6 @@
 // Build the MV3 extension with esbuild: bundle each entry, copy static
 // assets (offscreen.html, popup.html/css, the nobodywho wasm binary).
-import { build } from "esbuild";
+import { build, context } from "esbuild";
 import { cpSync, mkdirSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -19,7 +19,6 @@ const NW_WASM = join(NW, "dist", "nobodywho_minimal.wasm");
 const esbuildOpts = {
   bundle: true,
   platform: "browser",
-  format: "esm",
   target: ["chrome95", "firefox115"],
   sourcemap: true,
   alias: { "react-native-nobodywho": NW_ENTRY },
@@ -32,9 +31,14 @@ const esbuildOpts = {
   logLevel: "info",
 };
 
-const entries = {
+// Classic (IIFE) contexts — content scripts and event-page background scripts
+// can't use ESM import/export in MV3.
+const classicEntries = {
   background: join(root, "src/background.ts"),
   content: join(root, "src/content.ts"),
+};
+// ES module contexts — <script type="module"> pages.
+const moduleEntries = {
   "offscreen/offscreen": join(root, "src/offscreen/offscreen.ts"),
   "popup/popup": join(root, "src/popup/popup.ts"),
 };
@@ -51,12 +55,17 @@ async function main() {
   // the nobodywho wasm binary, next to the offscreen bundle (located via import.meta.url)
   cpSync(NW_WASM, join(outbase, "offscreen/nobodywho_minimal.wasm"));
 
+  const buildClassic = () => build({ ...esbuildOpts, format: "iife", entryPoints: classicEntries, outdir: outbase });
+  const buildModule = () => build({ ...esbuildOpts, format: "esm", entryPoints: moduleEntries, outdir: outbase });
+
   if (watch) {
-    const ctx = await build({ ...esbuildOpts, entryPoints: entries, outdir: outbase });
-    await ctx.watch();
+    const cc = await context({ ...esbuildOpts, format: "iife", entryPoints: classicEntries, outdir: outbase });
+    const mc = await context({ ...esbuildOpts, format: "esm", entryPoints: moduleEntries, outdir: outbase });
+    await Promise.all([cc.watch(), mc.watch()]);
     console.log("watching…");
   } else {
-    await build({ ...esbuildOpts, entryPoints: entries, outdir: outbase });
+    await buildClassic();
+    await buildModule();
   }
   console.log(`build complete → ${outbase}`);
 }
