@@ -1,7 +1,7 @@
 // Build the MV3 extension with esbuild: bundle each entry, copy static
 // assets (offscreen.html, popup.html/css, the nobodywho wasm binary).
 import { build, context } from "esbuild";
-import { cpSync, mkdirSync } from "node:fs";
+import { cpSync, mkdirSync, rmSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -44,6 +44,8 @@ const moduleEntries = {
 };
 
 async function main() {
+  // Start from a clean dist so a stale/mixed artifact can never be served.
+  rmSync(outbase, { recursive: true, force: true });
   mkdirSync(join(outbase, "offscreen"), { recursive: true });
   mkdirSync(join(outbase, "popup"), { recursive: true });
 

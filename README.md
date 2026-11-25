@@ -24,9 +24,9 @@ The build copies that wasm next to the offscreen bundle and bundles:
 ## Load locally (unpacked)
 
 **Firefox** (current target): `about:debugging#/runtime/this-firefox` → "Load Temporary Add-on" → pick
-`extension/manifest.json`. Model download (~450 MB) starts on first host creation, then filtering is live.
+`manifest.json`. Model download (~450 MB) starts on first host creation, then filtering is live.
 
-**Chrome/Edge**: `chrome://extensions` → enable Developer mode → "Load unpacked" → pick `extension/`.
+**Chrome/Edge**: `chrome://extensions` → enable Developer mode → "Load unpacked" → pick the repo root (this folder).
 
 ## How it behaves
 
