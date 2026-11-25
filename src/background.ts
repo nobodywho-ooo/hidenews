@@ -1,11 +1,9 @@
-// MV3 background. Owns a **FILO inference queue** ahead of the host worker:
-// - classification flows over long-lived Ports (chrome.runtime.connect) per page
-//   — push-based, ordered, reliable, no polling/broadcast
-// - cache is consulted before anything is queued (never re-infer an id)
-// - queue items are refcounted per page; a port disconnecting releases its items
-// - verdicts are pushed to every port still waiting on that story
+// MV3 background. Long-lived Ports per page; each page repeatedly declares the
+// full set of story ids it's interested in. The background:
+// - queues declared ids (cache-first, FILO, most-recent-declared first)
+// - drops anything not reaffirmed within 5 s (it was sent recently → keep)
+// - pushes verdicts to every port still interested in a story
 // - items queue while the model loads; dispatched only when it's ready
-// - if the model fails to load, an error is pushed back to the waiting pages
 import { MODES, DEFAULT_THRESHOLD, CACHE_VERSION, cacheStorageKey } from "./shared/config";
 import { safeSend } from "./shared/messaging";
 
@@ -13,6 +11,9 @@ declare const chrome: any;
 
 const WORKER_URL = "dist/host-worker.js";
 const PORT_NAME = "hn";
+const ITEM_TTL_MS = 5000; // drop items not reaffirmed within 5s
+
+type Port = any;
 
 let worker: Worker | null = null;
 let modelStatus: Record<string, unknown> = { status: "idle" };
@@ -25,16 +26,17 @@ const cache = new Map<string, number>();
 const CACHE_MAX = 3000;
 
 // ---- FILO queue ----
-// index 0 = next to process; new ids go to the front, existing ids move to the
-// front ("most recent first"). Items keyed by story id; waiters = the ports
-// (pages) waiting on it; refCount = waiters.size.
-type Port = any;
+// index 0 = next to process; new/refresh declarations move ids to the front.
 const queue: string[] = [];
-const items = new Map<string, { id: string; title: string; waiters: Set<Port>; retries: number }>();
+const items = new Map<string, { id: string; title: string; waiters: Set<Port>; lastSeen: number; retries: number }>();
 const MAX_RETRIES = 2;
+const nowMs = () => Date.now();
 
 let processing = false;
 let pumpTimer: ReturnType<typeof setTimeout> | null = null;
+
+// which ids each port (page) currently declares interest in
+const portInterests = new Map<Port, Set<string>>();
 
 // ---- cache: load/persist (namespaced by CACHE_VERSION) ----
 function loadCache() {
@@ -83,7 +85,7 @@ function persistStatus() {
   } catch {}
 }
 
-// ---- queue ops (FILO, dedupe, most-recent-first, cache-first) ----
+// ---- queue ops ----
 function moveToFront(id: string) {
   const i = queue.indexOf(id);
   if (i >= 0) queue.splice(i, 1);
@@ -93,28 +95,9 @@ function removeFromQueue(id: string) {
   const i = queue.indexOf(id);
   if (i >= 0) queue.splice(i, 1);
 }
-
 function dropEmptyItem(id: string) {
   items.delete(id);
   removeFromQueue(id);
-}
-
-/** Add a port as a waiter on a story. Returns false if it was already cached. */
-function enqueue(id: string, title: string, port: Port, ref: { hitCache: boolean }): void {
-  if (cache.has(id)) {
-    ref.hitCache = true;
-    return;
-  }
-  const existing = items.get(id);
-  if (existing) {
-    if (existing.waiters.has(port)) return; // this page already waiting
-    existing.waiters.add(port);
-    moveToFront(id);
-  } else {
-    items.set(id, { id, title, waiters: new Set([port]), retries: 0 });
-    moveToFront(id);
-  }
-  schedulePump();
 }
 
 function safePost(port: Port, msg: unknown) {
@@ -122,6 +105,67 @@ function safePost(port: Port, msg: unknown) {
     port.postMessage(msg);
   } catch {}
 }
+
+// ---- interest declarations ----
+function declareInterests(port: Port, list: any[]) {
+  if (!Array.isArray(list)) return;
+  const prev = portInterests.get(port) ?? new Set<string>();
+  const next = new Set<string>();
+  for (const it of list) {
+    const id = String(it && it.id);
+    const title = String((it && it.title) ?? "");
+    if (!id) continue;
+    next.add(id);
+    if (cache.has(id)) {
+      safePost(port, { kind: "verdict", id, p: cache.get(id)! }); // answered instantly
+      continue;
+    }
+    if (modelError) {
+      safePost(port, { kind: "classify-error", id, error: modelError });
+      continue;
+    }
+    const existing = items.get(id);
+    if (existing) {
+      existing.waiters.add(port);
+      existing.lastSeen = nowMs();
+      if (title) existing.title = title;
+      moveToFront(id); // most-recently-declared first
+    } else {
+      items.set(id, { id, title, waiters: new Set([port]), lastSeen: nowMs(), retries: 0 });
+      moveToFront(id);
+    }
+  }
+  // release ids this page no longer declares
+  for (const id of prev) {
+    if (!next.has(id)) {
+      const item = items.get(id);
+      if (item) {
+        item.waiters.delete(port);
+        if (item.waiters.size === 0) dropEmptyItem(id);
+      }
+    }
+  }
+  portInterests.set(port, next);
+  schedulePump();
+}
+
+function releasePort(port: Port) {
+  portInterests.delete(port);
+  for (const [id, item] of items) {
+    if (item.waiters.has(port)) {
+      item.waiters.delete(port);
+      if (item.waiters.size === 0) dropEmptyItem(id);
+    }
+  }
+}
+
+// Drop items not reaffirmed within the TTL (page navigated away / died).
+setInterval(() => {
+  const t = nowMs();
+  for (const [id, item] of [...items]) {
+    if (t - item.lastSeen > ITEM_TTL_MS) dropEmptyItem(id);
+  }
+}, 2000);
 
 // ---- processing loop (worker is stateless; queue lives here) ----
 function ensureWorker(): Worker | null {
@@ -146,7 +190,7 @@ function ensureWorker(): Worker | null {
     processing = false;
     if (lost) {
       const item = items.get(lost);
-      if (item) moveToFront(lost); // requeue the lost in-flight item
+      if (item) moveToFront(lost);
     }
     pump();
   };
@@ -155,8 +199,6 @@ function ensureWorker(): Worker | null {
   return worker;
 }
 
-// Coalesce a page's burst of enqueues before dispatching, so FILO ordering (top
-// of the page first) is honored even when the worker is idle.
 function schedulePump() {
   if (pumpTimer != null) clearTimeout(pumpTimer);
   pumpTimer = setTimeout(() => {
@@ -179,7 +221,7 @@ function pump() {
   }
   const w = ensureWorker();
   if (!w) {
-    moveToFront(id); // can't dispatch — keep queued
+    moveToFront(id);
     return;
   }
   processing = true;
@@ -198,7 +240,6 @@ function setModelError(message: string) {
   modelError = message;
   modelStatus = { status: "error", message };
   persistStatus();
-  // tell every waiting page the model failed to load
   errorOutQueue();
 }
 
@@ -247,7 +288,9 @@ function onWorkerMessage(msg: any) {
       dropEmptyItem(msg.id);
     } else if (item && (item.retries || 0) < MAX_RETRIES) {
       item.retries++;
-      moveToFront(msg.id); // transient failure — retry later
+      item.lastSeen = nowMs();
+      moveToFront(msg.id);
+      done(msg.id);
     } else {
       for (const p of item?.waiters ?? []) safePost(p, { kind: "classify-error", id: msg.id, error: msg.error ?? "inference failed" });
       dropEmptyItem(msg.id);
@@ -259,61 +302,16 @@ function onWorkerMessage(msg: any) {
 }
 
 // ---- per-page Ports ----
-
-// ---- port liveness (heartbeat lease) ----
-const livePorts = new Set<Port>();
-const portActivity = new Map<Port, number>();
-const nowMs = () => Date.now();
-
-function releasePort(port: Port) {
-  livePorts.delete(port);
-  portActivity.delete(port);
-  for (const [id, item] of items) {
-    if (item.waiters.has(port)) {
-      item.waiters.delete(port);
-      if (item.waiters.size === 0) dropEmptyItem(id);
-    }
-  }
-}
-
 chrome.runtime.onConnect.addListener((port: Port) => {
   if (port.name !== PORT_NAME) return;
-  livePorts.add(port);
-  portActivity.set(port, nowMs());
   port.onMessage.addListener((msg: any) => {
-    portActivity.set(port, nowMs());
-    if (msg?.kind === "classify") {
-      const ref = { hitCache: false };
-      enqueue(msg.id, msg.title, port, ref);
-      if (ref.hitCache) safePost(port, { kind: "verdict", id: msg.id, p: cache.get(msg.id)! });
-      else if (modelError) safePost(port, { kind: "classify-error", id: msg.id, error: modelError });
-    } else if (msg?.kind === "release") {
-      releasePort(port); // explicit unregister (kept for safety)
-    }
+    if (msg?.kind === "interests") declareInterests(port, msg.items);
   });
-  port.onDisconnect.addListener(() => releasePort(port)); // hard unload
+  port.onDisconnect.addListener(() => releasePort(port));
 });
 
-// Reap ports that stopped pinging (e.g. same-tab HN→HN navigation where the
-// content script died). Heartbeat: page pings every ~2s; miss ~4 → release.
-setInterval(() => {
-  const t = nowMs();
-  for (const p of [...livePorts]) {
-    if (t - (portActivity.get(p) ?? 0) > 8000) releasePort(p);
-  }
-}, 5000);
-
-// ---- single-shot runtime messages (settings relay, status for the popup) ----
+// ---- single-shot runtime messages (status for the popup) ----
 chrome.runtime.onMessage.addListener((msg: any, _sender: unknown, sendResponse: (v?: unknown) => void) => {
-  if (msg?.kind === "release") {
-    for (const id of msg.ids ?? []) {
-      const item = items.get(id);
-      // release without a specific port is unusual now; ignore as ports handle it
-      void item;
-    }
-    sendResponse({ ok: true });
-    return;
-  }
   if (msg?.kind === "get-status") {
     sendResponse({
       status: modelStatus.status,

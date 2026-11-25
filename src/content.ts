@@ -1,6 +1,7 @@
-// Content script: finds HN story rows, classifies them via the background over
-// a long-lived Port, and renders them progressively — tinted by P(ai), blurred
-// while pending, hidden (but keeping space) when the active mode says so.
+// Content script. On each HN page it renders story rows, marks them pending,
+// and repeatedly tells the background WHICH items it's interested in (its full
+// current set). The background enqueues/drops based on those declarations, and
+// pushes verdicts back over the long-lived Port.
 
 import { MODES, DEFAULT_THRESHOLD, CACHE_VERSION, cacheStorageKey, type Mode } from "./shared/config";
 
@@ -11,7 +12,6 @@ if (typeof document !== "undefined") {
 }
 
 const verdicts = new Map<string, number>(); // id -> p(ai)
-const inflight = new Set<string>(); // ids awaiting a verdict
 let mode: Mode = MODES.HIDE_AI;
 let threshold = DEFAULT_THRESHOLD;
 
@@ -27,9 +27,8 @@ chrome.storage.onChanged.addListener((changes: any, area: string) => {
   reapplyAll();
 });
 
-// ---- persistent Port to the background (push channel, auto-reconnects) ----
+// ---- persistent Port to the background ----
 let port: any = null;
-
 function connect() {
   try {
     const p = chrome.runtime.connect({ name: "hn" });
@@ -43,25 +42,9 @@ function connect() {
     });
     p.onDisconnect.addListener(() => {
       port = null;
-      // background restarted — reconnect and re-send whatever is still pending
-      if (inflight.size) {
-        setTimeout(() => {
-          connect();
-          for (const id of inflight) {
-            const s = storyFor(document.getElementById(id) as HTMLTableRowElement);
-            if (s) port?.postMessage({ kind: "classify", id: s.id, title: s.title });
-          }
-        }, 1000);
-      }
+      setTimeout(connect, 1000); // background restarted — reconnect
     });
     port = p;
-    // Heartbeat so the background can tell this page is alive (release on
-    // navigation is then quick and reliable, without relying on pagehide).
-    setInterval(() => {
-      try {
-        p.postMessage({ kind: "ping" });
-      } catch {}
-    }, 2000);
   } catch {
     port = null;
   }
@@ -127,8 +110,13 @@ function markPending(id: string) {
     row.style.opacity = "0.6";
   }
 }
+function markPendingAll() {
+  for (const row of storyRows()) {
+    const s = storyFor(row);
+    if (s && !verdicts.has(s.id)) markPending(s.id);
+  }
+}
 function onError(id: string) {
-  inflight.delete(id);
   const rows = storyBlock(id);
   if (rows.length === 0) return;
   for (const row of rows) {
@@ -144,7 +132,7 @@ function onError(id: string) {
   log(`error #${id}`);
 }
 
-// ---- verdict cache (instant revisit, version-stamped) ----
+// ---- verdict cache (instant revisit) ----
 async function loadCached() {
   const s = chrome.storage?.session || chrome.storage?.local;
   if (!s) return;
@@ -165,51 +153,55 @@ function rememberVerdict(id: string, p: number) {
     } catch {}
   }
 }
-
 function log(u: string) {
   console.log("[hidenews]", u);
 }
 
-// ---- flow ----
-function reapplyAll() {
-  for (const row of storyRows()) {
-    const s = storyFor(row);
-    if (s && verdicts.has(s.id)) applyVerdict(s.id, verdicts.get(s.id)!);
-  }
-}
 function onVerdict(id: string, p: number) {
-  inflight.delete(id);
   rememberVerdict(id, p);
   if (storyBlock(id).length) applyVerdict(id, p);
   log(`model ${(document.documentElement.dataset.hidenewsModel ?? "?")} · verdict #${id} = ${(p * 100).toFixed(0)}%`);
 }
 
-function classifyRow(s: { id: string; title: string }) {
-  if (verdicts.has(s.id)) {
-    applyVerdict(s.id, verdicts.get(s.id)!);
-    return;
-  }
-  if (inflight.has(s.id)) return;
-  inflight.add(s.id);
-  markPending(s.id);
-  if (!port) connect();
-  port?.postMessage({ kind: "classify", id: s.id, title: s.title });
+// ---- declare current interests ----
+function currentInterests(): { id: string; title: string }[] {
+  // reverse order so the top story is declared last → placed at the front of the
+  // FILO → processed first.
+  return [...storyRows()]
+    .reverse()
+    .map(storyFor)
+    .filter((s): s is { id: string; title: string } => !!s);
 }
 
-function classifyAll() {
-  // reverse order so the top story is enqueued last → front of the FILO → first
-  for (const row of [...storyRows()].reverse()) {
-    const s = storyFor(row);
-    if (s) classifyRow(s);
-  }
+function sendInterests() {
+  if (!port) return;
+  const items = currentInterests();
+  try {
+    port.postMessage({ kind: "interests", items });
+  } catch {}
 }
 
+let observing = false;
 function observe() {
-  classifyAll();
-  const mo = new MutationObserver(() => classifyAll());
+  if (observing) return;
+  observing = true;
+  markPendingAll();
+  sendInterests();
+  const mo = new MutationObserver(() => {
+    markPendingAll(); // mark any newly-added (paginated) rows
+    sendInterests();
+  });
   mo.observe(document.body, { childList: true, subtree: true });
   const nav = document.querySelector<HTMLElement>(".pager a.morelink");
-  nav?.addEventListener("click", () => setTimeout(classifyAll, 300));
+  nav?.addEventListener("click", () => setTimeout(sendInterests, 300));
+  setInterval(sendInterests, 2000); // refreshes TTL + handles reconnection
+}
+
+function reapplyAll() {
+  for (const row of storyRows()) {
+    const s = storyFor(row);
+    if (s && verdicts.has(s.id)) applyVerdict(s.id, verdicts.get(s.id)!);
+  }
 }
 
 loadCached().then(() => {
