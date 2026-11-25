@@ -172,20 +172,22 @@ function classifyRow(s: { id: string; title: string }) {
   if (inflight.has(s.id)) return; // already asked for this one
   inflight.add(s.id);
   markPending(s.id);
-  let sent = 0;
-  const trySend = () => {
-    // fire-and-forget: the verdict comes back as a broadcast. Only retry when
-    // there's genuinely no receiver (host not created yet).
-    safeSend({ kind: "classify", id: s.id, title: s.title }, () => {
-      const em = chrome.runtime.lastError?.message ?? "";
-      const noHost = /Receiving end does not exist|Could not establish connection/.test(em);
-      if (noHost) {
-        mkSend(s.id); // ask the background to create the host
-        if (++sent < 30) setTimeout(trySend, 2000);
-      }
-    });
-  };
-  trySend();
+  // Fire-and-forget, but keep re-sending until a verdict lands. This handles
+  // the case where the page was opened before the model finished downloading:
+  // the background ensures the host exists on every classify, and once ready
+  // the host starts answering these re-sends. (The explicit ensure-host below
+  // is a belt-and-suspenders nudge for a not-yet-woken background.)
+  mkSend(s.id);
+  let tries = 0;
+  const iv = setInterval(() => {
+    if (verdicts.has(s.id) || ++tries > 60) {
+      clearInterval(iv);
+      inflight.delete(s.id);
+      return;
+    }
+    safeSend({ kind: "classify", id: s.id, title: s.title });
+  }, 10000);
+  safeSend({ kind: "classify", id: s.id, title: s.title });
 }
 
 function classifyAll() {

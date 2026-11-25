@@ -65,7 +65,26 @@ chrome.runtime.onMessage.addListener((msg: any, _sender: unknown, sendResponse: 
     // so its "no host" retry never fires). Ensure the host exists here.
     ensureHost();
   }
+  if (msg?.kind === "verdict") {
+    // the background *does* receive every classification result (the host
+    // broadcasts it to all contexts); tally it and keep it visible.
+    tally(msg.id, msg.p);
+  }
+  if (msg?.kind === "model-status") {
+    console.log("[hidenews bg] model status:", msg.status);
+  }
 });
+
+// ---- classification tally (so the background demonstrably gets the data) ----
+let classified = 0;
+chrome.storage.local.get(["hn.stats"], (v: any) => {
+  classified = v?.["hn.stats"]?.classified ?? 0;
+});
+function tally(id: string, p: number) {
+  classified++;
+  console.log(`[hidenews bg] #${id} → ${(p * 100).toFixed(0)}% about AI (${classified} total)`);
+  chrome.storage.local.set({ "hn.stats": { classified, at: Date.now() } }, () => {});
+}
 
 // Broadcast setting changes to the host so it can react (e.g. threshold).
 chrome.storage.onChanged.addListener((changes: any, area: string) => {
