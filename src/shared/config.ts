@@ -30,3 +30,21 @@ export const DEFAULT_SETTINGS = {
   mode: MODES.HIDE_AI as Mode,
   threshold: DEFAULT_THRESHOLD,
 };
+
+// Version-stamp the verdict cache so that changing the model/prompt/threshold
+// (or upgrading the extension) silently invalidates stale verdicts instead of
+// serving results computed by an old configuration.
+function cacheVersion(): string {
+  const src = MODEL_PATH + "\u0000" + JSON.stringify(PROMPT) + "\u0000" + String(DEFAULT_THRESHOLD);
+  let h = 0x811c9dc5;
+  for (let i = 0; i < src.length; i++) {
+    h ^= src.charCodeAt(i);
+    h = (h * 0x01000193) >>> 0;
+  }
+  return "v" + h.toString(16).padStart(8, "0");
+}
+
+export const CACHE_VERSION = cacheVersion();
+
+/** storage.local key for a story's cached verdict (namespaced by version). */
+export const cacheStorageKey = (id: string) => `cv:${CACHE_VERSION}:${id}`;

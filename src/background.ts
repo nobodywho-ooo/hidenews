@@ -1,7 +1,12 @@
-// MV3 background. Owns the inference **host worker** (a dedicated thread, so the
-// extension process is never blocked), relays messages between content scripts
-// and the worker, persists model status, relays settings, and tallies verdicts.
-import { MODES, DEFAULT_THRESHOLD } from "./shared/config";
+// MV3 background. Owns a **FILO inference queue** ahead of the host worker:
+// - cache is consulted before anything is queued (never re-infer an id)
+// - classifies are answered immediately (ack), the queue is NOT part of the
+//   message channel
+// - queue items are refcounted per page; a page releases its ids on leave
+// - verdicts are broadcast so every pending HN page gets them
+// - the queue/cache live here (never on the worker), so we can later run more
+//   workers against the same queue.
+import { MODES, DEFAULT_THRESHOLD, CACHE_VERSION, cacheStorageKey } from "./shared/config";
 import { safeSend } from "./shared/messaging";
 
 declare const chrome: any;
@@ -11,12 +16,18 @@ const WORKER_URL = "dist/host-worker.js";
 let worker: Worker | null = null;
 let modelStatus: Record<string, unknown> = { status: "idle" };
 
-// Dedupe: classify a given story id at most once. Because content scripts may
-// re-send (and a given id can be pending in several scripts), we cache the
-// verdict and answer repeats without running inference again.
-const verdictCache = new Map<string, number>();
-const inferring = new Set<string>();
+// ---- verdict cache (in-memory for this run; persisted, version-stamped) ----
+const cache = new Map<string, number>();
 const CACHE_MAX = 3000;
+
+// ---- FILO queue ----
+// `queue` is the order (index 0 = next to process); new ids go to the front and
+// existing ids are moved to the front = "most recent first". Items are keyed by
+// story id and refcount number of pages still waiting on them.
+const queue: string[] = [];
+const items = new Map<string, { id: string; title: string; refCount: number }>();
+
+let processing = false;
 
 function persistStatus() {
   try {
@@ -32,6 +43,80 @@ function persistStatus() {
   } catch {}
 }
 
+// ---- cache: load/persist (namespaced by CACHE_VERSION) ----
+function loadCache() {
+  try {
+    chrome.storage.local.get(null, (all: any) => {
+      const prefix = `cv:`;
+      for (const [k, p] of Object.entries(all)) {
+        if (k.startsWith(prefix) && typeof p === "number") {
+          const it = k.slice(prefix.length);
+          const [ver, id] = splitKey(it);
+          if (ver === CACHE_VERSION && id) cache.set(id, p);
+        }
+      }
+    });
+  } catch {}
+}
+function splitKey(s: string): [string, string] {
+  const i = s.indexOf(":");
+  return i >= 0 ? [s.slice(0, i), s.slice(i + 1)] : ["", ""];
+}
+function rememberVerdict(id: string, p: number) {
+  cache.set(id, p);
+  try {
+    chrome.storage.local.set({ [cacheStorageKey(id)]: p }, () => pruneCache());
+  } catch {}
+}
+function pruneCache() {
+  try {
+    chrome.storage.local.get(null, (all: any) => {
+      const keys = Object.keys(all).filter((k) => k.startsWith(`cv:`));
+      if (keys.length > CACHE_MAX) {
+        chrome.storage.local.remove(keys.slice(0, keys.length - CACHE_MAX));
+      }
+    });
+  } catch {}
+}
+
+// ---- queue ops (FILO, dedupe, most-recent-first, cache-first) ----
+function moveToFront(id: string) {
+  const i = queue.indexOf(id);
+  if (i >= 0) queue.splice(i, 1);
+  queue.unshift(id);
+}
+
+/** Enqueue a story for classification unless already cached. */
+function enqueue(id: string, title: string): boolean {
+  if (cache.has(id)) return false; // already classified — never requeue
+  const existing = items.get(id);
+  if (existing) {
+    existing.refCount++;
+    moveToFront(id);
+  } else {
+    items.set(id, { id, title, refCount: 1 });
+    moveToFront(id);
+  }
+  pump();
+  return true;
+}
+
+/** A page left; decrease the refcount of each id it was waiting on. */
+function release(ids: string[]) {
+  for (const id of ids) {
+    const item = items.get(id);
+    if (item) {
+      item.refCount--;
+      if (item.refCount <= 0) {
+        items.delete(id);
+        const i = queue.indexOf(id);
+        if (i >= 0) queue.splice(i, 1);
+      }
+    }
+  }
+}
+
+// ---- processing loop (worker is stateless; queue lives here) ----
 function ensureWorker(): Worker | null {
   if (worker) return worker;
   let w: Worker;
@@ -50,12 +135,36 @@ function ensureWorker(): Worker | null {
       w.terminate();
     } catch {}
     worker = null;
+    processing = false;
     modelStatus = { status: "error", message: e?.message ?? "worker crashed" };
     persistStatus();
+    pump(); // restart work on a fresh worker
   };
   worker = w;
   worker.postMessage({ kind: "init" });
   return worker;
+}
+
+function pump() {
+  if (processing) return;
+  if (queue.length === 0) return;
+  const id = queue.shift();
+  if (id === undefined) return;
+  const item = items.get(id);
+  if (!item) {
+    processing = false;
+    pump();
+    return;
+  }
+  const w = ensureWorker();
+  if (!w) {
+    items.delete(id);
+    processing = false;
+    pump();
+    return;
+  }
+  processing = true;
+  w.postMessage({ kind: "classify", id, title: item.title });
 }
 
 function onWorkerMessage(msg: any) {
@@ -65,48 +174,35 @@ function onWorkerMessage(msg: any) {
     persistStatus();
     safeSend({ kind: "model-status", ...msg });
   } else if (msg.kind === "verdict") {
-    verdictCache.set(msg.id, msg.p);
-    inferring.delete(msg.id);
-    // persist so content scripts can resolve even if they miss the broadcast
-    try {
-      chrome.storage?.local?.set({ [`v:${msg.id}`]: msg.p }, () => pruneCache());
-    } catch {}
-    tally(msg.id, msg.p);
+    // cache it, drop the queue item, and tell every pending page.
+    items.delete(msg.id);
+    const qi = queue.indexOf(msg.id);
+    if (qi >= 0) queue.splice(qi, 1);
+    rememberVerdict(msg.id, msg.p);
     safeSend({ kind: "verdict", id: msg.id, p: msg.p });
+    processing = false;
+    pump();
   } else if (msg.kind === "status") {
     console.log("[hidenews bg]", msg.text);
   }
 }
 
-function pruneCache() {
-  try {
-    chrome.storage.local.get(null, (all: any) => {
-      const keys = Object.keys(all).filter((k) => k.startsWith("v:"));
-      if (keys.length > CACHE_MAX) {
-        chrome.storage.local.remove(keys.slice(0, keys.length - CACHE_MAX));
-      }
-    });
-  } catch {}
-}
-
 chrome.runtime.onMessage.addListener((msg: any, _sender: unknown, sendResponse: (v?: unknown) => void) => {
   if (msg?.kind === "classify") {
-    if (verdictCache.has(msg.id)) {
-      // already classified this story — answer from cache, don't re-infer
-      safeSend({ kind: "verdict", id: msg.id, p: verdictCache.get(msg.id)! });
-    } else if (inferring.has(msg.id)) {
-      // a previous classify for this id is already being worked — do nothing
-    } else {
-      inferring.add(msg.id);
-      const w = ensureWorker();
-      if (w) w.postMessage({ kind: "classify", id: msg.id, title: msg.title });
-      else {
-        inferring.delete(msg.id);
-        modelStatus = { status: "error", message: "worker unavailable" };
-        persistStatus();
-      }
+    if (!enqueue(msg.id, msg.title)) {
+      // cached — answer immediately from the cache too (the page may have missed
+      // the broadcast on this load)
+      safeSend({ kind: "verdict", id: msg.id, p: cache.get(msg.id)! });
     }
-  } else if (msg?.kind === "get-status") {
+    sendResponse({ ok: true }); // immediate ack: data is durably handled
+    return;
+  }
+  if (msg?.kind === "release") {
+    release(msg.ids ?? []);
+    sendResponse({ ok: true });
+    return;
+  }
+  if (msg?.kind === "get-status") {
     sendResponse({
       status: modelStatus.status,
       message: modelStatus.message ?? undefined,
@@ -116,17 +212,6 @@ chrome.runtime.onMessage.addListener((msg: any, _sender: unknown, sendResponse: 
     return true;
   }
 });
-
-// ---- classification tally ----
-let classified = 0;
-chrome.storage.local.get(["hn.stats"], (v: any) => {
-  classified = v?.["hn.stats"]?.classified ?? 0;
-});
-function tally(id: string, p: number) {
-  classified++;
-  console.log(`[hidenews bg] #${id} → ${(p * 100).toFixed(0)}% about AI (${classified} total)`);
-  chrome.storage.local.set({ "hn.stats": { classified, at: Date.now() } }, () => {});
-}
 
 // Relay setting changes to content scripts.
 chrome.storage.onChanged.addListener((changes: any, area: string) => {
@@ -140,7 +225,8 @@ chrome.storage.onChanged.addListener((changes: any, area: string) => {
   }
 });
 
-// Default settings stored once.
 chrome.storage.local.get(["mode", "threshold"], (v: any) => {
   if (v.mode === undefined) chrome.storage.local.set({ mode: MODES.HIDE_AI, threshold: DEFAULT_THRESHOLD });
 });
+
+loadCache();

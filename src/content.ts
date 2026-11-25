@@ -2,13 +2,14 @@
 // renders them progressively — tinted by P(ai), blurred while pending, and
 // hidden (but keeping their space) when the active mode says so.
 
-import { MODES, DEFAULT_THRESHOLD, type Mode } from "./shared/config";
+import { MODES, DEFAULT_THRESHOLD, CACHE_VERSION, cacheStorageKey, type Mode } from "./shared/config";
 import { safeSend } from "./shared/messaging";
 
 declare const chrome: any;
 
 const verdicts = new Map<string, number>(); // id -> p(ai)
 const inflight = new Set<string>(); // ids with an outstanding classify request
+const requested = new Set<string>(); // ids this page asked for (for release on leave)
 let mode: Mode = MODES.HIDE_AI;
 let threshold = DEFAULT_THRESHOLD;
 
@@ -107,17 +108,16 @@ function storeArea() {
   if (chrome.storage?.session) return chrome.storage.session;
   return chrome.storage?.local;
 }
-function cacheKey(id: string) {
-  return `v:${id}`;
-}
 async function loadCached() {
   const s = storeArea();
   if (!s) return;
   try {
     const all = await s.get(null);
+    const prefix = `cv:${CACHE_VERSION}:`;
     for (const [k, p] of Object.entries(all)) {
-      if (k.startsWith("v:") && typeof p === "number") verdicts.set(k.slice(2), p);
+      if (k.startsWith(prefix) && typeof p === "number") verdicts.set(k.slice(prefix.length), p);
     }
+    console.log(`[hidenews] loaded ${verdicts.size} cached verdicts (cache ${CACHE_VERSION})`);
   } catch {}
 }
 function rememberVerdict(id: string, p: number) {
@@ -125,14 +125,11 @@ function rememberVerdict(id: string, p: number) {
   const s = storeArea();
   if (!s) return;
   try {
-    s.set({ [cacheKey(id)]: p });
-    // bound growth when persisting to storage.local
+    s.set({ [cacheStorageKey(id)]: p });
     if (!chrome.storage.session) {
       s.get(null, (all: any) => {
-        const vkeys = Object.keys(all).filter((k) => k.startsWith("v:"));
-        if (vkeys.length > CACHE_MAX) {
-          s.remove(vkeys.slice(0, vkeys.length - CACHE_MAX));
-        }
+        const vkeys = Object.keys(all).filter((k) => k.startsWith(`cv:${CACHE_VERSION}:`));
+        if (vkeys.length > CACHE_MAX) s.remove(vkeys.slice(0, vkeys.length - CACHE_MAX));
       });
     }
   } catch {}
@@ -166,31 +163,29 @@ function classifyRow(s: { id: string; title: string }) {
   }
   if (inflight.has(s.id)) return; // already asked for this one
   inflight.add(s.id);
+  requested.add(s.id); // so we can decrement its refcount when we leave
   markPending(s.id);
-  const storageKey = "v:" + s.id;
-  // Fire-and-forget classify + periodic re-check until a verdict resolves.
-  // The background answers repeats from its cache (it never re-infers), and we
-  // also read the persisted cache directly so a missed broadcast can't keep a
-  // row pending forever.
-  const act = () => {
-    if (verdicts.has(s.id)) return;
-    try {
-      chrome.storage.local.get([storageKey], (v: any) => {
-        if (typeof v?.[storageKey] === "number") onVerdict(s.id, v[storageKey]);
-      });
-    } catch {}
-    safeSend({ kind: "classify", id: s.id, title: s.title });
-  };
-  act();
-  let tries = 0;
+  // Send exactly once; the background acks immediately and owns the queue. The
+  // verdict comes back via broadcast, and we ALSO poll the versioned store so a
+  // missed broadcast can't keep a row pending.
+  safeSend({ kind: "classify", id: s.id, title: s.title });
+  const key = cacheStorageKey(s.id);
   const iv = setInterval(() => {
-    if (verdicts.has(s.id) || ++tries > 40) {
+    if (verdicts.has(s.id)) {
       clearInterval(iv);
       inflight.delete(s.id);
       return;
     }
-    act();
-  }, 10000);
+    try {
+      chrome.storage.local.get([key], (v: any) => {
+        if (typeof v?.[key] === "number") onVerdict(s.id, v[key]);
+      });
+    } catch {}
+  }, 5000);
+  setTimeout(() => {
+    clearInterval(iv);
+    inflight.delete(s.id);
+  }, 120000); // backstop: don't poll forever
 }
 
 function classifyAll() {
@@ -199,6 +194,16 @@ function classifyAll() {
     if (s) classifyRow(s);
   }
 }
+
+function releaseAll() {
+  if (requested.size === 0) return;
+  const ids = [...requested];
+  safeSend({ kind: "release", ids }, () => {
+    void chrome.runtime.lastError; // background woken by the message
+  });
+}
+window.addEventListener("pagehide", releaseAll);
+window.addEventListener("beforeunload", releaseAll);
 
 function observe() {
   classifyAll();
