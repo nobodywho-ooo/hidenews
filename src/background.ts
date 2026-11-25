@@ -33,6 +33,7 @@ const items = new Map<string, { id: string; title: string; refCount: number; ret
 const MAX_RETRIES = 2;
 
 let processing = false;
+let pumpTimer: ReturnType<typeof setTimeout> | null = null;
 
 // ---- cache: load/persist (namespaced by CACHE_VERSION) ----
 function loadCache() {
@@ -103,7 +104,7 @@ function enqueue(id: string, title: string): boolean {
     items.set(id, { id, title, refCount: 1, retries: 0 });
     moveToFront(id);
   }
-  pump();
+  schedulePump();
   return true;
 }
 
@@ -151,6 +152,17 @@ function ensureWorker(): Worker | null {
   worker = w;
   worker.postMessage({ kind: "init" });
   return worker;
+}
+
+// Coalesce a page's burst of enqueues before dispatching, so FILO ordering (top
+// of the page first) is honored even when the worker is idle — otherwise the
+// first-arriving item would be dispatched before the rest of the burst lands.
+function schedulePump() {
+  if (pumpTimer != null) clearTimeout(pumpTimer);
+  pumpTimer = setTimeout(() => {
+    pumpTimer = null;
+    pump();
+  }, 30);
 }
 
 function pump() {
