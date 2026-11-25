@@ -9,12 +9,20 @@ const root = dirname(fileURLToPath(import.meta.url));
 const outbase = join(root, "dist");
 const watch = process.argv.includes("--watch");
 
+// Resolve nobodywho straight from its repo (a sibling of the project) rather
+// than via the `file:` node_modules symlink, which is relative and breaks when
+// this project (or node_modules) moves.
+const NW = join(root, "..", "nobodywho", "nobodywho", "js");
+const NW_ENTRY = join(NW, "dist", "index.mjs");
+const NW_WASM = join(NW, "dist", "nobodywho_minimal.wasm");
+
 const esbuildOpts = {
   bundle: true,
   platform: "browser",
   format: "esm",
   target: ["chrome95", "firefox115"],
   sourcemap: true,
+  alias: { "react-native-nobodywho": NW_ENTRY },
   // node builtins are only touched on the Node path (guarded at runtime in the
   // browser), so keep them un-bundled.
   external: [
@@ -41,8 +49,7 @@ async function main() {
   cpSync(join(root, "src/popup/popup.css"), join(outbase, "popup/popup.css"));
 
   // the nobodywho wasm binary, next to the offscreen bundle (located via import.meta.url)
-  const wasm = join(root, "node_modules", "react-native-nobodywho", "dist", "nobodywho_minimal.wasm");
-  cpSync(wasm, join(outbase, "offscreen/nobodywho_minimal.wasm"));
+  cpSync(NW_WASM, join(outbase, "offscreen/nobodywho_minimal.wasm"));
 
   if (watch) {
     const ctx = await build({ ...esbuildOpts, entryPoints: entries, outdir: outbase });

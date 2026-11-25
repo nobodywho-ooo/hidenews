@@ -6,14 +6,14 @@ on-device Laya decision model (nobodywho, WASM, no cloud).
 ## Build
 
 ```bash
-cd extension
+cd .  # repo root
 npm install
 npm run build        # → dist/
 ```
 
 Prereqs: the nobodywho WASM build already exists (`nobodywho/nobodywho/js/dist/nobodywho_minimal.wasm`).
 To rebuild it from the `fetch` branch: `cd nobodywho/nobodywho/js && npm run wasm` (this is the ~366 MB
-full build; keep it in sync with `extension/build.mjs`).
+full build; keep it in sync with `build.mjs`).
 
 The build copies that wasm next to the offscreen bundle and bundles:
 - `dist/background.js` — creates the offscreen host on startup
@@ -46,7 +46,7 @@ The build copies that wasm next to the offscreen bundle and bundles:
 ## Model + prompt
 
 Question = 3-option `choice` (ai / ai-adjacent / not_ai), threshold 0.5 — identical to
-`tune/prompt.mjs`. Change it in `src/shared/config.ts` and rebuild.
+`ideas/tune/prompt.mjs`. Change it in `src/shared/config.ts` and rebuild.
 
 ## Known caveats / to verify in the browser test
 
