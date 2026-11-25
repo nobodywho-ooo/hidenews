@@ -139,6 +139,13 @@ function reapplyAll() {
   }
 }
 
+function onVerdict(id: string, p: number) {
+  inflight.delete(id);
+  rememberVerdict(id, p);
+  if (storyBlock(id).length) applyVerdict(id, p);
+  setStatus(`model ${(document.documentElement.dataset.hidenewsModel ?? "?")} · verdict #${id} = ${(p * 100).toFixed(0)}%`);
+}
+
 function classifyRow(s: { id: string; title: string }) {
   if (verdicts.has(s.id)) {
     applyVerdict(s.id, verdicts.get(s.id)!);
@@ -149,7 +156,12 @@ function classifyRow(s: { id: string; title: string }) {
   markPending(s.id);
   let sent = 0;
   const trySend = () => {
-    chrome.runtime.sendMessage({ kind: "classify", id: s.id, title: s.title }, () => {
+    chrome.runtime.sendMessage({ kind: "classify", id: s.id, title: s.title }, (res: any) => {
+      // The host replies directly with the verdict; a broadcast also reaches us.
+      if (res && res.kind === "verdict") {
+        onVerdict(s.id, res.p);
+        return;
+      }
       const em = chrome.runtime.lastError?.message ?? "";
       const noHost = /Receiving end does not exist|Could not establish connection/.test(em);
       if (noHost) {
@@ -180,10 +192,7 @@ function observe() {
 // message from host
 chrome.runtime.onMessage.addListener((msg: any) => {
   if (msg?.kind === "verdict") {
-    inflight.delete(msg.id);
-    rememberVerdict(msg.id, msg.p);
-    if (storyBlock(msg.id).length) applyVerdict(msg.id, msg.p);
-    setStatus(`model ${(document.documentElement.dataset.hidenewsModel ?? "?")} · verdict #${msg.id} = ${(msg.p * 100).toFixed(0)}%`);
+    onVerdict(msg.id, msg.p);
     return;
   }
   if (msg?.kind === "model-status") {

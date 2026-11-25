@@ -76,7 +76,9 @@ let queue: Promise<unknown> = Promise.resolve();
 async function classify(id: string, title: string): Promise<{ id: string; p: number }> {
   if (!decision) throw new Error(`model not ready (${modelState})`);
   const res = await decision.decide({ state: title, questions: PROMPT });
-  const p = res.answers.is_ai[AI_CHOICE_KEY] ?? 0;
+  const a = res.answers.is_ai;
+  // `choice` answers put per-option probabilities in `probabilities`, not top-level.
+  const p = a?.probabilities?.[AI_CHOICE_KEY] ?? a?.[AI_CHOICE_KEY] ?? 0;
   return { id, p };
 }
 
@@ -90,15 +92,18 @@ chrome.runtime.onMessage.addListener((msg: any, _sender: unknown, sendResponse: 
     queue = queue
       .then(() => classify(m.id, m.title))
       .then((verdict) => {
-        chrome.runtime.sendMessage({ kind: "verdict", id: verdict.id, p: verdict.p });
+        const v = { kind: "verdict", id: verdict.id, p: verdict.p };
+        try {
+          chrome.runtime.sendMessage(v); // reach any other open HN tabs
+        } catch {}
+        sendResponse(v); // direct reply to the requesting content script
         setStatus(`classified #${verdict.id} (${(verdict.p * 100).toFixed(0)}%)`);
-        return verdict;
       })
       .catch((e) => {
         console.error("[hidenews host] classify failed", e);
+        sendResponse(undefined);
       });
-    // verdict is delivered via the broadcast below; close the channel now
-    sendResponse(undefined);
+    return true; // respond asynchronously
   }
   if (msg?.kind === "set-settings") {
     chrome.runtime.sendMessage({ kind: "settings-changed", ...msg });

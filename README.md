@@ -58,14 +58,10 @@ Firefox's "Reload" on a temporary add-on can keep serving old pages/resources
 offscreen bundle ever contains node-only FS glue (e.g. a `NODERAWFS` throw), so a
 regression breaks at build time instead of silently at runtime.
 
-## Known caveats / to verify in the browser test
+## Notes
 
-- **WASM CSP (fixed):** MV3 extension pages block `WebAssembly` under the default `script-src 'self'`
-  policy — that's what kept the host from ever loading the model. Solved by adding
-  `"content_security_policy": { "extension_pages": "script-src 'self' 'wasm-unsafe-eval'; object-src 'self'" }`
-  to the manifest (`wasm-unsafe-eval` permits wasm without allowing arbitrary `eval`).
-- **Firefox offscreen:** Chrome uses `chrome.offscreen.createDocument`. If `.offscreen` is unavailable
-  in the Firefox version we test against, `background.js` falls back to opening the host page in a
-  hidden tab. Confirm the fallback path in Firefox.
-- **HN DOM:** expects the current `tr.athing` / `span.titleline` markup (2026). `MutationObserver`
-  handles pagination via the "More" link.
+- MV3 extension pages block WebAssembly by default; the manifest whitelists it via
+  `"content_security_policy": { "extension_pages": "script-src 'self' 'wasm-unsafe-eval'; object-src 'self'" }`.
+- Host: Chrome uses `chrome.offscreen.createDocument`; Firefox opens the page in a hidden tab.
+- Needs the current HN markup (`tr.athing` / `span.titleline`). `MutationObserver` handles pagination.
+- Model downloads (~450 MB) into IndexedDB on first run; verdicts are cached in `storage.session`.
