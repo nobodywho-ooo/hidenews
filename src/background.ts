@@ -259,26 +259,49 @@ function onWorkerMessage(msg: any) {
 }
 
 // ---- per-page Ports ----
+
+// ---- port liveness (heartbeat lease) ----
+const livePorts = new Set<Port>();
+const portActivity = new Map<Port, number>();
+const nowMs = () => Date.now();
+
+function releasePort(port: Port) {
+  livePorts.delete(port);
+  portActivity.delete(port);
+  for (const [id, item] of items) {
+    if (item.waiters.has(port)) {
+      item.waiters.delete(port);
+      if (item.waiters.size === 0) dropEmptyItem(id);
+    }
+  }
+}
+
 chrome.runtime.onConnect.addListener((port: Port) => {
   if (port.name !== PORT_NAME) return;
+  livePorts.add(port);
+  portActivity.set(port, nowMs());
   port.onMessage.addListener((msg: any) => {
+    portActivity.set(port, nowMs());
     if (msg?.kind === "classify") {
       const ref = { hitCache: false };
       enqueue(msg.id, msg.title, port, ref);
       if (ref.hitCache) safePost(port, { kind: "verdict", id: msg.id, p: cache.get(msg.id)! });
       else if (modelError) safePost(port, { kind: "classify-error", id: msg.id, error: modelError });
+    } else if (msg?.kind === "release") {
+      releasePort(port); // explicit unregister (kept for safety)
     }
   });
-  port.onDisconnect.addListener(() => {
-    // reliable release: drop this page from every item it was waiting on
-    for (const [id, item] of items) {
-      if (item.waiters.has(port)) {
-        item.waiters.delete(port);
-        if (item.waiters.size === 0) dropEmptyItem(id);
-      }
-    }
-  });
+  port.onDisconnect.addListener(() => releasePort(port)); // hard unload
 });
+
+// Reap ports that stopped pinging (e.g. same-tab HN→HN navigation where the
+// content script died). Heartbeat: page pings every ~2s; miss ~4 → release.
+setInterval(() => {
+  const t = nowMs();
+  for (const p of [...livePorts]) {
+    if (t - (portActivity.get(p) ?? 0) > 8000) releasePort(p);
+  }
+}, 5000);
 
 // ---- single-shot runtime messages (settings relay, status for the popup) ----
 chrome.runtime.onMessage.addListener((msg: any, _sender: unknown, sendResponse: (v?: unknown) => void) => {

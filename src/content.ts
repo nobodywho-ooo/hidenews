@@ -55,6 +55,13 @@ function connect() {
       }
     });
     port = p;
+    // Heartbeat so the background can tell this page is alive (release on
+    // navigation is then quick and reliable, without relying on pagehide).
+    setInterval(() => {
+      try {
+        p.postMessage({ kind: "ping" });
+      } catch {}
+    }, 2000);
   } catch {
     port = null;
   }
