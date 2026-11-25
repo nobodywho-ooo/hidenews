@@ -94,6 +94,7 @@ function markPending(id: string) {
     row.style.filter = "blur(1px) saturate(0.6)";
     row.style.opacity = "0.6";
   }
+  log(`pending #${id}`);
 }
 
 // ---- verdict cache ----
@@ -136,17 +137,9 @@ function rememberVerdict(id: string, p: number) {
   } catch {}
 }
 
-// ---- observable status (debug badge + console) ----
-let badge: HTMLDivElement | null = null;
-function setStatus(u: string) {
+// ---- diagnostics: console only (no on-page indicator) ----
+function log(u: string) {
   console.log("[hidenews]", u);
-  if (!badge) {
-    badge = document.createElement("div");
-    badge.style.cssText =
-      "position:fixed;right:8px;bottom:8px;z-index:99999;font:11px/1.4 monospace;color:#eee;background:#111c;padding:4px 8px;border-radius:6px;pointer-events:none;";
-    document.body.appendChild(badge);
-  }
-  badge.textContent = u;
 }
 
 function mkSend(id: string) {
@@ -167,7 +160,7 @@ function onVerdict(id: string, p: number) {
   inflight.delete(id);
   rememberVerdict(id, p);
   if (storyBlock(id).length) applyVerdict(id, p);
-  setStatus(`model ${(document.documentElement.dataset.hidenewsModel ?? "?")} · verdict #${id} = ${(p * 100).toFixed(0)}%`);
+  log(`model ${(document.documentElement.dataset.hidenewsModel ?? "?")} · verdict #${id} = ${(p * 100).toFixed(0)}%`);
 }
 
 function classifyRow(s: { id: string; title: string }) {
@@ -180,18 +173,14 @@ function classifyRow(s: { id: string; title: string }) {
   markPending(s.id);
   let sent = 0;
   const trySend = () => {
-    chrome.runtime.sendMessage({ kind: "classify", id: s.id, title: s.title }, (res: any) => {
-      // The host replies directly with the verdict; a broadcast also reaches us.
-      if (res && res.kind === "verdict") {
-        onVerdict(s.id, res.p);
-        return;
-      }
+    // fire-and-forget: the verdict comes back as a broadcast. Only retry when
+    // there's genuinely no receiver (host not created yet).
+    chrome.runtime.sendMessage({ kind: "classify", id: s.id, title: s.title }, () => {
       const em = chrome.runtime.lastError?.message ?? "";
       const noHost = /Receiving end does not exist|Could not establish connection/.test(em);
       if (noHost) {
         mkSend(s.id); // ask the background to create the host
-        if (++sent < 30) setTimeout(trySend, 2000); // keep retrying a while
-        else setStatus(`#${s.id}: host never came up`);
+        if (++sent < 30) setTimeout(trySend, 2000);
       }
     });
   };
@@ -221,7 +210,7 @@ chrome.runtime.onMessage.addListener((msg: any) => {
   }
   if (msg?.kind === "model-status") {
     document.documentElement.dataset.hidenewsModel = msg.status;
-    setStatus(`hidenews · model: ${msg.status}${msg.message ? " — " + msg.message : ""}`);
+    log(`model: ${msg.status}${msg.message ? " — " + msg.message : ""}`);
     if (msg.status === "ready") {
       inflight.clear();
       setTimeout(classifyAll, 0);

@@ -92,18 +92,16 @@ chrome.runtime.onMessage.addListener((msg: any, _sender: unknown, sendResponse: 
     queue = queue
       .then(() => classify(m.id, m.title))
       .then((verdict) => {
-        const v = { kind: "verdict", id: verdict.id, p: verdict.p };
+        // fire-and-forget broadcast; never hold the message port open, so page
+        // unload/reload isn't blocked while a batch is classifying.
         try {
-          chrome.runtime.sendMessage(v); // reach any other open HN tabs
+          chrome.runtime.sendMessage({ kind: "verdict", id: verdict.id, p: verdict.p });
         } catch {}
-        sendResponse(v); // direct reply to the requesting content script
         setStatus(`classified #${verdict.id} (${(verdict.p * 100).toFixed(0)}%)`);
       })
       .catch((e) => {
         console.error("[hidenews host] classify failed", e);
-        sendResponse(undefined);
       });
-    return true; // respond asynchronously
   }
   if (msg?.kind === "set-settings") {
     chrome.runtime.sendMessage({ kind: "settings-changed", ...msg });

@@ -50,11 +50,9 @@ async function ensureHost() {
   return creating;
 }
 
-chrome.runtime.onInstalled.addListener(ensureHost);
-chrome.runtime.onStartup.addListener(ensureHost);
-ensureHost();
-
-// Content scripts ask us to create the host when they can't reach it.
+// Host is created **on demand**: the background never opens a tab on its own
+// (so reloading the script doesn't spawn a hidden tab). A content script asks
+// us to create the host via an "ensure-host" message once it can't reach one.
 chrome.runtime.onMessage.addListener((msg: any, _sender: unknown, sendResponse: (v?: unknown) => void) => {
   if (msg?.kind === "ensure-host") {
     ensureHost().then(() => sendResponse({ ok: true }));
