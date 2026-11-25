@@ -1,19 +1,18 @@
 // MV3 background. Owns a **FILO inference queue** ahead of the host worker:
+// - classification flows over long-lived Ports (chrome.runtime.connect) per page
+//   — push-based, ordered, reliable, no polling/broadcast
 // - cache is consulted before anything is queued (never re-infer an id)
-// - classifies are answered immediately (ack), the queue is NOT part of the
-//   message channel
-// - queue items are refcounted per page; a page releases its ids on leave
-// - verdicts are broadcast so every pending HN page gets them
-// - items queue while the model loads; nothing is dispatched before it's ready
-// - if the model fails to load, an error is passed back to the waiting pages
-// - the queue/cache live here (never on the worker), so we can later run more
-//   workers against the same queue.
+// - queue items are refcounted per page; a port disconnecting releases its items
+// - verdicts are pushed to every port still waiting on that story
+// - items queue while the model loads; dispatched only when it's ready
+// - if the model fails to load, an error is pushed back to the waiting pages
 import { MODES, DEFAULT_THRESHOLD, CACHE_VERSION, cacheStorageKey } from "./shared/config";
 import { safeSend } from "./shared/messaging";
 
 declare const chrome: any;
 
 const WORKER_URL = "dist/host-worker.js";
+const PORT_NAME = "hn";
 
 let worker: Worker | null = null;
 let modelStatus: Record<string, unknown> = { status: "idle" };
@@ -27,9 +26,11 @@ const CACHE_MAX = 3000;
 
 // ---- FILO queue ----
 // index 0 = next to process; new ids go to the front, existing ids move to the
-// front ("most recent first"). Items keyed by story id, refcounted per page.
+// front ("most recent first"). Items keyed by story id; waiters = the ports
+// (pages) waiting on it; refCount = waiters.size.
+type Port = any;
 const queue: string[] = [];
-const items = new Map<string, { id: string; title: string; refCount: number; retries: number }>();
+const items = new Map<string, { id: string; title: string; waiters: Set<Port>; retries: number }>();
 const MAX_RETRIES = 2;
 
 let processing = false;
@@ -93,33 +94,33 @@ function removeFromQueue(id: string) {
   if (i >= 0) queue.splice(i, 1);
 }
 
-/** Enqueue a story unless already cached. Dispatches only when the model is ready. */
-function enqueue(id: string, title: string): boolean {
-  if (cache.has(id)) return false; // already classified — never requeue
+function dropEmptyItem(id: string) {
+  items.delete(id);
+  removeFromQueue(id);
+}
+
+/** Add a port as a waiter on a story. Returns false if it was already cached. */
+function enqueue(id: string, title: string, port: Port, ref: { hitCache: boolean }): void {
+  if (cache.has(id)) {
+    ref.hitCache = true;
+    return;
+  }
   const existing = items.get(id);
   if (existing) {
-    existing.refCount++;
+    if (existing.waiters.has(port)) return; // this page already waiting
+    existing.waiters.add(port);
     moveToFront(id);
   } else {
-    items.set(id, { id, title, refCount: 1, retries: 0 });
+    items.set(id, { id, title, waiters: new Set([port]), retries: 0 });
     moveToFront(id);
   }
   schedulePump();
-  return true;
 }
 
-/** A page left; decrease the refcount of each id it was waiting on. */
-function release(ids: string[]) {
-  for (const id of ids) {
-    const item = items.get(id);
-    if (item) {
-      item.refCount--;
-      if (item.refCount <= 0) {
-        items.delete(id);
-        removeFromQueue(id);
-      }
-    }
-  }
+function safePost(port: Port, msg: unknown) {
+  try {
+    port.postMessage(msg);
+  } catch {}
 }
 
 // ---- processing loop (worker is stateless; queue lives here) ----
@@ -155,8 +156,7 @@ function ensureWorker(): Worker | null {
 }
 
 // Coalesce a page's burst of enqueues before dispatching, so FILO ordering (top
-// of the page first) is honored even when the worker is idle — otherwise the
-// first-arriving item would be dispatched before the rest of the burst lands.
+// of the page first) is honored even when the worker is idle.
 function schedulePump() {
   if (pumpTimer != null) clearTimeout(pumpTimer);
   pumpTimer = setTimeout(() => {
@@ -171,7 +171,8 @@ function pump() {
   const id = queue.shift();
   if (id === undefined) return;
   const item = items.get(id);
-  if (!item) {
+  if (!item || item.waiters.size === 0) {
+    if (id !== undefined) dropEmptyItem(id);
     processing = false;
     pump();
     return;
@@ -204,15 +205,16 @@ function setModelError(message: string) {
 function errorOutQueue() {
   const m = modelError ?? modelStatus.message ?? "model unavailable";
   for (const id of [...queue]) {
-    items.delete(id);
-    removeFromQueue(id);
-    safeSend({ kind: "classify-error", id, error: m });
+    const item = items.get(id);
+    for (const p of item?.waiters ?? []) safePost(p, { kind: "classify-error", id, error: m });
+    dropEmptyItem(id);
   }
   if (inFlightId) {
     const id = inFlightId;
+    const item = items.get(id);
+    for (const p of item?.waiters ?? []) safePost(p, { kind: "classify-error", id, error: m });
+    dropEmptyItem(id);
     inFlightId = null;
-    items.delete(id);
-    safeSend({ kind: "classify-error", id, error: m });
   }
   processing = false;
 }
@@ -229,26 +231,26 @@ function onWorkerMessage(msg: any) {
       setModelError(msg.message ?? "model failed to load");
     }
     persistStatus();
-    safeSend({ kind: "model-status", ...msg });
+    const statusMsg = { kind: "model-status", ...msg };
+    for (const item of items.values()) for (const p of item.waiters) safePost(p, statusMsg);
+    safeSend(statusMsg);
   } else if (msg.kind === "verdict") {
-    items.delete(msg.id);
-    removeFromQueue(msg.id);
+    const item = items.get(msg.id);
+    for (const p of item?.waiters ?? []) safePost(p, { kind: "verdict", id: msg.id, p: msg.p });
+    dropEmptyItem(msg.id);
     rememberVerdict(msg.id, msg.p);
-    safeSend({ kind: "verdict", id: msg.id, p: msg.p });
     done(msg.id);
   } else if (msg.kind === "classify-error") {
     const item = items.get(msg.id);
     if (modelError) {
-      items.delete(msg.id);
-      removeFromQueue(msg.id);
-      safeSend({ kind: "classify-error", id: msg.id, error: modelError });
+      for (const p of item?.waiters ?? []) safePost(p, { kind: "classify-error", id: msg.id, error: modelError });
+      dropEmptyItem(msg.id);
     } else if (item && (item.retries || 0) < MAX_RETRIES) {
       item.retries++;
       moveToFront(msg.id); // transient failure — retry later
     } else {
-      items.delete(msg.id);
-      removeFromQueue(msg.id);
-      safeSend({ kind: "classify-error", id: msg.id, error: msg.error ?? "inference failed" });
+      for (const p of item?.waiters ?? []) safePost(p, { kind: "classify-error", id: msg.id, error: msg.error ?? "inference failed" });
+      dropEmptyItem(msg.id);
     }
     done(msg.id);
   } else if (msg.kind === "status") {
@@ -256,21 +258,36 @@ function onWorkerMessage(msg: any) {
   }
 }
 
-chrome.runtime.onMessage.addListener((msg: any, _sender: unknown, sendResponse: (v?: unknown) => void) => {
-  if (msg?.kind === "classify") {
-    if (!enqueue(msg.id, msg.title)) {
-      // cached — answer immediately too (page may have missed the broadcast)
-      safeSend({ kind: "verdict", id: msg.id, p: cache.get(msg.id)! });
-    } else if (modelError) {
-      // model failed to load: pass the error to this page now.
-      safeSend({ kind: "classify-error", id: msg.id, error: modelError });
+// ---- per-page Ports ----
+chrome.runtime.onConnect.addListener((port: Port) => {
+  if (port.name !== PORT_NAME) return;
+  port.onMessage.addListener((msg: any) => {
+    if (msg?.kind === "classify") {
+      const ref = { hitCache: false };
+      enqueue(msg.id, msg.title, port, ref);
+      if (ref.hitCache) safePost(port, { kind: "verdict", id: msg.id, p: cache.get(msg.id)! });
+      else if (modelError) safePost(port, { kind: "classify-error", id: msg.id, error: modelError });
     }
-    ensureWorker(); // start model load now (pump dispatches once it's ready)
-    sendResponse({ ok: true }); // immediate ack: data is durably handled
-    return;
-  }
+  });
+  port.onDisconnect.addListener(() => {
+    // reliable release: drop this page from every item it was waiting on
+    for (const [id, item] of items) {
+      if (item.waiters.has(port)) {
+        item.waiters.delete(port);
+        if (item.waiters.size === 0) dropEmptyItem(id);
+      }
+    }
+  });
+});
+
+// ---- single-shot runtime messages (settings relay, status for the popup) ----
+chrome.runtime.onMessage.addListener((msg: any, _sender: unknown, sendResponse: (v?: unknown) => void) => {
   if (msg?.kind === "release") {
-    release(msg.ids ?? []);
+    for (const id of msg.ids ?? []) {
+      const item = items.get(id);
+      // release without a specific port is unusual now; ignore as ports handle it
+      void item;
+    }
     sendResponse({ ok: true });
     return;
   }
@@ -285,7 +302,6 @@ chrome.runtime.onMessage.addListener((msg: any, _sender: unknown, sendResponse: 
   }
 });
 
-// Relay setting changes to content scripts.
 chrome.storage.onChanged.addListener((changes: any, area: string) => {
   if (area !== "local") return;
   const pack: Record<string, unknown> = {};
