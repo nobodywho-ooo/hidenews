@@ -87,9 +87,8 @@ chrome.runtime.onMessage.addListener((msg: any, _sender: unknown, sendResponse: 
       .catch((e) => {
         console.error("[hidenews host] classify failed", e);
       });
-    // respond asynchronously via the streamed verdict message
+    // verdict is delivered via the broadcast below; close the channel now
     sendResponse(undefined);
-    return true;
   }
   if (msg?.kind === "set-settings") {
     chrome.runtime.sendMessage({ kind: "settings-changed", ...msg });

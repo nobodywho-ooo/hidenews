@@ -8,6 +8,7 @@ const OFFSCREEN_REASON = "WORKERS" as const; // we host a running inference work
 const OFFSCREEN_URL = "dist/offscreen/offscreen.html";
 
 let hostTabId: number | null = null;
+const HOST_TAB_KEY = "hidenews.hostTabId";
 
 let creating: Promise<void> | null = null;
 
@@ -26,12 +27,23 @@ async function ensureHost() {
       }
       return;
     }
-    // Firefox fallback: hidden tab hosting the same page.
-    const opened = await chrome.tabs.query({ url: `*://*/*${OFFSCREEN_URL}` });
-    if (opened.length === 0) {
-      const tab = await chrome.tabs.create({ url: chrome.runtime.getURL(OFFSCREEN_URL), active: false });
-      hostTabId = tab.id;
+    // Firefox fallback: hidden tab hosting the same page. Remember its id in
+    // storage so we reuse it across restarts instead of piling up duplicates.
+    const stored = await chrome.storage.local.get([HOST_TAB_KEY]);
+    if (stored[HOST_TAB_KEY] != null) {
+      try {
+        const t = await chrome.tabs.get(stored[HOST_TAB_KEY]);
+        if (t?.id) {
+          hostTabId = t.id;
+          return;
+        }
+      } catch {
+        // tab no longer exists — create a fresh one below
+      }
     }
+    const tab = await chrome.tabs.create({ url: chrome.runtime.getURL(OFFSCREEN_URL), active: false });
+    hostTabId = tab.id;
+    chrome.storage.local.set({ [HOST_TAB_KEY]: tab.id });
   })().finally(() => {
     creating = null;
   });

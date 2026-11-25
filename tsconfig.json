@@ -4,6 +4,10 @@
     "module": "ESNext",
     "moduleResolution": "bundler",
     "lib": ["ES2022", "DOM", "DOM.Iterable", "WebWorker"],
+    "baseUrl": ".",
+    "paths": {
+      "react-native-nobodywho": ["../nobodywho/nobodywho/js/dist/index.d.mts"]
+    },
     "strict": true,
     "skipLibCheck": true,
     "noEmit": true,
