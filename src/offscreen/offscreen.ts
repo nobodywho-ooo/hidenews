@@ -17,6 +17,8 @@ type DecisionHandle = {
 let decision: DecisionHandle | null = null;
 let modelState: "idle" | "downloading" | "loading" | "ready" | "error" = "idle";
 let modelError: string | null = null;
+let lastDownloaded = 0;
+let lastTotal = 0;
 
 const statusEl = document.getElementById("status");
 
@@ -27,6 +29,12 @@ function setStatus(text: string) {
 
 function broad(modelStatus: string, extra?: Record<string, unknown>) {
   chrome.runtime?.sendMessage({ kind: "model-status", status: modelStatus, ...extra });
+  // persist so the popup / content can read status without messaging us
+  try {
+    chrome.storage?.local?.set({
+      "hn.model": { status: modelStatus, error: modelError, downloaded: lastDownloaded, total: lastTotal, at: Date.now() },
+    });
+  } catch {}
 }
 
 async function loadModel() {
@@ -38,6 +46,8 @@ async function loadModel() {
     const d = await Decision.fromPath({
       modelPath: MODEL_PATH,
       onDownloadProgress: (downloaded, total) => {
+        lastDownloaded = downloaded;
+        lastTotal = total;
         setStatus(`downloading… ${formatMB(downloaded)} / ${formatMB(total)}`);
         broad("downloading", { downloaded, total });
       },

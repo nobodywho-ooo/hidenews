@@ -59,6 +59,13 @@ modeOnly.addEventListener("change", saveSettings);
 thr.addEventListener("input", saveSettings);
 
 function pollStatus() {
+  // Prefer the persisted state from storage (works even if the host is down).
+  try {
+    chrome.storage.local.get(["hn.model"], (v: any) => {
+      const s = v["hn.model"];
+      if (s) setModelStatus({ status: s.status, message: s.error, downloaded: s.downloaded, total: s.total });
+    });
+  } catch {}
   try {
     chrome.runtime.sendMessage({ kind: "get-status" }, (res: any) => {
       if (res) setModelStatus(res);

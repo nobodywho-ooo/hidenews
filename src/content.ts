@@ -112,6 +112,25 @@ function rememberVerdict(id: string, p: number) {
   }
 }
 
+// ---- observable status (debug badge + console) ----
+let badge: HTMLDivElement | null = null;
+function setStatus(u: string) {
+  console.log("[hidenews]", u);
+  if (!badge) {
+    badge = document.createElement("div");
+    badge.style.cssText =
+      "position:fixed;right:8px;bottom:8px;z-index:99999;font:11px/1.4 monospace;color:#eee;background:#111c;padding:4px 8px;border-radius:6px;pointer-events:none;";
+    document.body.appendChild(badge);
+  }
+  badge.textContent = u;
+}
+
+function mkSend(id: string) {
+  chrome.runtime.sendMessage({ kind: "ensure-host" }, () => {
+    void chrome.runtime.lastError; // background may not exist yet; host also will retry
+  });
+}
+
 // ---- flow ----
 function reapplyAll() {
   for (const row of storyRows()) {
@@ -128,12 +147,15 @@ function classifyRow(s: { id: string; title: string }) {
   if (inflight.has(s.id)) return; // already asked for this one
   inflight.add(s.id);
   markPending(s.id);
+  let sent = 0;
   const trySend = () => {
     chrome.runtime.sendMessage({ kind: "classify", id: s.id, title: s.title }, () => {
       const em = chrome.runtime.lastError?.message ?? "";
       const noHost = /Receiving end does not exist|Could not establish connection/.test(em);
       if (noHost) {
-        setTimeout(trySend, 2000); // host not created yet — retry
+        mkSend(s.id); // ask the background to create the host
+        if (++sent < 30) setTimeout(trySend, 2000); // keep retrying a while
+        else setStatus(`#${s.id}: host never came up`);
       }
     });
   };
@@ -161,12 +183,13 @@ chrome.runtime.onMessage.addListener((msg: any) => {
     inflight.delete(msg.id);
     rememberVerdict(msg.id, msg.p);
     if (storyBlock(msg.id).length) applyVerdict(msg.id, msg.p);
+    setStatus(`model ${(document.documentElement.dataset.hidenewsModel ?? "?")} · verdict #${msg.id} = ${(msg.p * 100).toFixed(0)}%`);
     return;
   }
   if (msg?.kind === "model-status") {
     document.documentElement.dataset.hidenewsModel = msg.status;
+    setStatus(`hidenews · model: ${msg.status}${msg.message ? " — " + msg.message : ""}`);
     if (msg.status === "ready") {
-      // Model just came up — retry pending rows.
       inflight.clear();
       setTimeout(classifyAll, 0);
     }

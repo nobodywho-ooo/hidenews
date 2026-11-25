@@ -54,6 +54,14 @@ chrome.runtime.onInstalled.addListener(ensureHost);
 chrome.runtime.onStartup.addListener(ensureHost);
 ensureHost();
 
+// Content scripts ask us to create the host when they can't reach it.
+chrome.runtime.onMessage.addListener((msg: any, _sender: unknown, sendResponse: (v?: unknown) => void) => {
+  if (msg?.kind === "ensure-host") {
+    ensureHost().then(() => sendResponse({ ok: true }));
+    return true;
+  }
+});
+
 // Broadcast setting changes to the host so it can react (e.g. threshold).
 chrome.storage.onChanged.addListener((changes: any, area: string) => {
   if (area !== "local") return;
