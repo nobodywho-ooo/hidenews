@@ -101,7 +101,7 @@ for (const m of mismatches) {
 // --- write model-only predictions ---
 
 const outPath = join(
-  "ideas/test-data",
+  "test-data",
   `predictions-${basename(snapshotPath).replace(/^front-page-|\.html$/g, "")}-threshold-${threshold}.json`,
 );
 const json = {

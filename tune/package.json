@@ -3,7 +3,7 @@
   "private": true,
   "type": "module",
   "dependencies": {
-    "react-native-nobodywho": "file:../../../nobodywho/nobodywho/js"
+    "react-native-nobodywho": "file:../../nobodywho/nobodywho/js"
   },
   "overrides": {
     "@ubjs/core": "0.31.0-7",

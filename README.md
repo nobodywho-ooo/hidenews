@@ -17,7 +17,9 @@ src/
   popup/             settings + model status
   shared/config.ts   model, prompt, threshold, cache versioning
 tests/               static bundle checks + headless-Firefox test
-ideas/               model tuning: test suite, HN snapshots, scripts
+test-suite/          hand-labelled cases (persistent tuning suite)
+test-data/           HN snapshots + model predictions
+tune/                tuning scripts (init-suite, analyze, sweep, report)
 ```
 
 ## Build
@@ -72,10 +74,11 @@ Toggled with the *Debug view* button in the popup; **normal** is the default.
 
 The question is a 3-option `choice` (ai / ai-adjacent / not-ai); a story counts
 as AI when P(ai) ≥ threshold (default 0.5, adjustable in the popup). It's defined
-in `src/shared/config.ts`, mirrored from `ideas/tune/prompt.mjs`.
+in `src/shared/config.ts`, mirrored from `tune/prompt.mjs`.
 
 ## Tuning
 
-See [`ideas/test-suite/README.md`](ideas/test-suite/README.md): hand-labelled
-front pages in `ideas/test-suite/cases/`, snapshots and predictions in
-`ideas/test-data/`, scripts in `ideas/tune/`.
+See [`test-suite/README.md`](test-suite/README.md). Hand-labelled front pages
+live in `test-suite/cases/`, snapshots and predictions in `test-data/`, and the
+scripts in `tune/`. Run them from the repo root, e.g.
+`node tune/analyze.mjs test-data/front-page-2026-11-24.html`.

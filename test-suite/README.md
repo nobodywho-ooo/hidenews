@@ -9,7 +9,7 @@ the default mode?).
 One file per sampled day, so it stays tweakable and greppable long-term:
 
 ```
-ideas/test-suite/cases/
+test-suite/cases/
   2026-10-24.json   # front page of 2026-10-24 (a month ago)
   2026-11-17.json   # a week ago
   2026-11-23.json   # yesterday
@@ -29,13 +29,13 @@ not model inputs and don't appear in the entries.
 ## Workflow
 
 - Grab a day's front page:
-  `curl -L "https://news.ycombinator.com/front?day=YYYY-MM-DD" -o ideas/test-data/front-page-YYYY-MM-DD.html`
-- `node ideas/tune/init-suite.mjs ideas/test-data/front-page-YYYY-MM-DD.html` — creates/updates
+  `curl -L "https://news.ycombinator.com/front?day=YYYY-MM-DD" -o test-data/front-page-YYYY-MM-DD.html`
+- `node tune/init-suite.mjs test-data/front-page-YYYY-MM-DD.html` — creates/updates
   that day's suite file, adding any new stories as `expected: null` (existing
   labels preserved, entries kept in HN order). No model run needed.
-- `node ideas/tune/analyze.mjs <snapshot.html>` — classifies and reports accuracy
+- `node tune/analyze.mjs <snapshot.html>` — classifies and reports accuracy
   against that day's labels, printing every mismatch.
-- `node ideas/tune/analyze.mjs <snapshot.html> --update-suite` — same, but also
+- `node tune/analyze.mjs <snapshot.html> --update-suite` — same, but also
   adds new stories to the day's suite file first.
 - The winning prompt/threshold is copied into `src/shared/config.ts`; the
   unjudged `null` cases are how the suite stays honest.

@@ -7,7 +7,7 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { basename, join } from "node:path";
 
-export const SUITE_DIR = "ideas/test-suite/cases";
+export const SUITE_DIR = "test-suite/cases";
 
 /** `test-data/front-page-2026-11-24.html` → `test-suite/cases/2026-11-24.json` */
 export function suitePathFor(snapshotPath) {

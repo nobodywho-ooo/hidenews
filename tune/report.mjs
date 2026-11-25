@@ -13,12 +13,12 @@ if (!pname || !thr) {
 }
 const t = Number(thr);
 const { days, probabilities } = JSON.parse(
-  readFileSync("ideas/tmp/probabilities.json", "utf8"),
+  readFileSync("tmp/probabilities.json", "utf8"),
 );
 
 let tp = 0, fp = 0, fn = 0, tn = 0;
 for (const day of days) {
-  const cases = loadSuite(suitePathFor(`ideas/test-data/front-page-${day}.html`));
+  const cases = loadSuite(suitePathFor(`test-data/front-page-${day}.html`));
   for (const [url, byPrompt] of Object.entries(probabilities[day])) {
     const c = cases.get(url);
     if (!c || c.expected == null) continue;
@@ -40,7 +40,7 @@ console.log(
 for (const kind of ["FN", "FP"]) {
   console.log(`### ${kind}  (${kind === "FN" ? "should hide, kept" : "hides a real story"})`);
   for (const day of days) {
-    const cases = loadSuite(suitePathFor(`ideas/test-data/front-page-${day}.html`));
+    const cases = loadSuite(suitePathFor(`test-data/front-page-${day}.html`));
     for (const [url, byPrompt] of Object.entries(probabilities[day])) {
       const c = cases.get(url);
       if (!c || c.expected == null) continue;

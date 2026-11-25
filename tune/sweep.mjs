@@ -43,7 +43,7 @@ const decision = await Decision.fromPath({ modelPath: MODEL });
 /** probabilities[day][url][promptName] = noul probability */
 const probabilities = {};
 for (const day of days) {
-  const snapshot = `ideas/test-data/front-page-${day}.html`;
+  const snapshot = `test-data/front-page-${day}.html`;
   const stories = parseStories(readFileSync(snapshot, "utf8"));
   probabilities[day] = {};
   for (const s of stories) {
@@ -60,7 +60,7 @@ for (const day of days) {
 decision.destroy();
 mkdirSync("tmp", { recursive: true });
 writeFileSync(
-  "ideas/tmp/probabilities.json",
+  "tmp/probabilities.json",
   JSON.stringify({ days, probabilities }, null, 2),
 );
 
@@ -71,7 +71,7 @@ for (const pname of Object.keys(PROMOTS)) {
   for (const thr of thresholds) {
     let tp = 0, fp = 0, fn = 0, tn = 0;
     for (const day of days) {
-      const cases = loadSuite(suitePathFor(`ideas/test-data/front-page-${day}.html`));
+      const cases = loadSuite(suitePathFor(`test-data/front-page-${day}.html`));
       for (const [url, byPrompt] of Object.entries(probabilities[day])) {
         const c = cases.get(url);
         if (!c || c.expected == null) continue;
@@ -107,7 +107,7 @@ for (const want of [true, false]) {
   const label = want ? "FALSE NEGATIVES (should hide, kept)" : "FALSE POSITIVES (hides a real story)";
   console.log(`\n### ${label}`);
   for (const day of days) {
-    const cases = loadSuite(suitePathFor(`ideas/test-data/front-page-${day}.html`));
+    const cases = loadSuite(suitePathFor(`test-data/front-page-${day}.html`));
     for (const [url, byPrompt] of Object.entries(probabilities[day])) {
       const c = cases.get(url);
       if (!c || c.expected == null) continue;
