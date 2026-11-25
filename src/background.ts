@@ -35,8 +35,6 @@ const items = new Map<string, { id: string; title: string; waiters: Set<Port>; l
 const MAX_RETRIES = 2;
 const nowMs = () => Date.now();
 
-let pumpTimer: ReturnType<typeof setTimeout> | null = null;
-
 // which ids each port (page) currently declares interest in
 const portInterests = new Map<Port, Set<string>>();
 
@@ -149,7 +147,7 @@ function declareInterests(port: Port, list: any[]) {
     }
   }
   portInterests.set(port, next);
-  schedulePump();
+  pump(); // message-driven: no timer in the dispatch path (immune to background timer throttling)
 }
 
 function releasePort(port: Port) {
@@ -204,14 +202,6 @@ function spawnWorker(): Worker | null {
   };
   w.postMessage({ kind: "init" });
   return w;
-}
-
-function schedulePump() {
-  if (pumpTimer != null) clearTimeout(pumpTimer);
-  pumpTimer = setTimeout(() => {
-    pumpTimer = null;
-    pump();
-  }, 30);
 }
 
 // An idle worker that has finished loading its model, or null.
