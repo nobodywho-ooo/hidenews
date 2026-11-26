@@ -23,7 +23,8 @@ src/
   shared/config.ts     model, prompt, threshold, cache versioning
   shared/assets.ts     derives the bundle directory from the manifest
   shared/messaging.ts  safe cross-browser runtime messaging
-tests/                 static bundle checks, pool unit tests, headless-Firefox test
+build-icons.mjs        generates the extension icon (orange square, white H)
+tests/                 static bundle checks, pool + icon unit tests, headless-Firefox test
 test-suite/            hand-labelled cases (persistent tuning suite)
 test-data/             HN snapshots + model predictions
 tune/                  tuning scripts (init-suite, analyze, sweep, report)
@@ -35,6 +36,15 @@ different manifests: Firefox's MV3 background is an event page
 (`background.scripts`), while Chrome's is a service worker
 (`background.service_worker`). The bundles are otherwise identical, except that
 Chrome also ships the offscreen page (see below).
+
+## Icon
+
+The extension icon is the Hacker News orange square with a white bold **H**, in
+the spirit of the Y Combinator mark. It is generated, not committed: the
+geometry lives in `build-icons.mjs`, which rasterises it to the PNG sizes the
+browsers ask for (16/32/48/96/128) and also emits an SVG. `npm run build` writes
+them into each `<browser>/dist/icons/`. To preview, run
+`node build-icons.mjs tmp/icons`.
 
 ## Build
 

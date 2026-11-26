@@ -6,6 +6,7 @@
 // SVG for previewing. The build writes both into <browser>/dist/icons/.
 import { mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
+import { pathToFileURL } from "node:url";
 import { deflateSync } from "node:zlib";
 
 // Hacker News orange; the YC mark uses the same colour.
@@ -137,4 +138,11 @@ export function writeIcons(dir) {
     writeFileSync(join(dir, `icon-${size}.png`), encodePng(size, rasterize(size)));
   }
   writeFileSync(join(dir, "icon.svg"), iconSvg());
+}
+
+// `node build-icons.mjs [dir]` writes the icons for previewing (default: tmp/icons).
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
+  const dir = process.argv[2] ?? "tmp/icons";
+  writeIcons(dir);
+  console.log(`wrote ${ICON_SIZES.length} PNGs + icon.svg to ${dir}`);
 }
