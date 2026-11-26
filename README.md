@@ -43,8 +43,11 @@ The extension icon is the Hacker News orange square with a white bold **H**, in
 the spirit of the Y Combinator mark. It is generated, not committed: the
 geometry lives in `build-icons.mjs`, which rasterises it to the PNG sizes the
 browsers ask for (16/32/48/96/128) and also emits an SVG. `npm run build` writes
-them into each `<browser>/dist/icons/`. To preview, run
-`node build-icons.mjs tmp/icons`.
+them into each `<browser>/dist/icons/`.
+
+- `npm run icons` regenerates just the icons into both `dist/icons/` folders
+  (without a full rebuild).
+- `npm run icons:preview` writes them to `tmp/icons` for a quick look.
 
 ## Build
 

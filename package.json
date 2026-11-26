@@ -4,6 +4,8 @@
   "type": "module",
   "scripts": {
     "build": "node build.mjs",
+    "icons": "node build-icons.mjs firefox/dist/icons && node build-icons.mjs chrome/dist/icons",
+    "icons:preview": "node build-icons.mjs tmp/icons",
     "watch": "node build.mjs --watch",
     "typecheck": "tsc --noEmit",
     "test": "node --test tests/bundles.test.mjs tests/pool.test.mjs tests/icons.test.mjs",
