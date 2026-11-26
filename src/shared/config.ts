@@ -19,10 +19,11 @@ export const PROMPT = {
 export const AI_CHOICE_KEY = "ai";
 
 // Chosen by sweeping the labelled suite (test-suite/cases) with the title-only
-// input the extension actually sends. 0.51 is the Pareto-best cutoff: it hides
-// 2/67 non-AI stories while catching 12/23 AI ones. 0.45 was rejected because it
-// hides 8/67 humans for one extra AI story (see tune/sweep.mjs output).
-export const DEFAULT_THRESHOLD = 0.51;
+// input the extension actually sends. 0.50 hides 4/67 non-AI stories while
+// catching 12/23 AI ones. The Pareto-best was 0.51 (2/67 hidden), but that is
+// within sampling noise, so the rounder 0.50 is the default. 0.45 was rejected:
+// it hides 8/67 humans for one extra AI story (see tune/sweep.mjs output).
+export const DEFAULT_THRESHOLD = 0.5;
 
 // The inference worker bundle, at the root of the built extension.
 export const HOST_WORKER = "host-worker.js";

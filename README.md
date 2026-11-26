@@ -108,7 +108,7 @@ Toggled with the *Debug view* button in the popup; **normal** is the default.
   hidden, so you can inspect the classifier's behaviour.
 
 The question is a 3-option `choice` (ai / ai-adjacent / not-ai); a story counts
-as AI when P(ai) ≥ threshold (default 0.51, adjustable in the popup). It's
+as AI when P(ai) ≥ threshold (default 0.50, adjustable in the popup). It's
 defined in `src/shared/config.ts`, mirrored from `tune/prompt.mjs`.
 
 ## Tuning
