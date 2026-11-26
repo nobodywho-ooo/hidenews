@@ -1,6 +1,8 @@
 // Content script for news.ycombinator.com. Tells the background (over a
 // long-lived Port) which stories still need a verdict, and renders each row
-// when its verdict arrives. Two ways to render:
+// when its verdict arrives. Only story listings are filtered: a story's own
+// page (/item?id=...) is ignored, and comment rows are never matched. Two ways
+// to render:
 //
 //   normal (default): story rows stay hidden while being classified and are
 //     only shown once a verdict says they're not filtered. Nothing else changes.
@@ -70,8 +72,11 @@ function connect() {
 // ---- HN DOM ----
 type Story = { id: string; title: string };
 
+// Story submissions only: comment rows are `tr.athing` too (on comment listings
+// as plain `athing`, on a story's page as `athing comtr`), so requiring
+// `.submission` keeps comments out of the filter entirely.
 function storyRows(): HTMLTableRowElement[] {
-  return Array.from(document.querySelectorAll<HTMLTableRowElement>("tr.athing"));
+  return Array.from(document.querySelectorAll<HTMLTableRowElement>("tr.athing.submission"));
 }
 function storyFor(row: HTMLTableRowElement): Story | null {
   const title = row.querySelector("span.titleline a")?.textContent?.trim();
@@ -201,7 +206,13 @@ function declare() {
   } catch {}
 }
 
-connect();
-declare();
-new MutationObserver(declare).observe(document.body, { childList: true, subtree: true });
-setInterval(declare, DECLARE_INTERVAL_MS); // keeps the TTL fresh (and the background awake)
+// Only story listings are filtered. A story's own page (/item?id=...) shows one
+// story plus its comments, and neither should be touched; comment listings have
+// no submission rows at all. On such pages the extension stays completely idle.
+const STORY_PAGE = /^\/item\/?$/;
+if (!STORY_PAGE.test(location.pathname) && storyRows().length > 0) {
+  connect();
+  declare();
+  new MutationObserver(declare).observe(document.body, { childList: true, subtree: true });
+  setInterval(declare, DECLARE_INTERVAL_MS); // keeps the TTL fresh (and the background awake)
+}

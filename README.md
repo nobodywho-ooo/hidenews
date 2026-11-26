@@ -65,7 +65,9 @@ The first run downloads the model (~450 MB,
 
 - **Content script** declares the stories it still needs over a long-lived
   Port: on load, on DOM changes and every 2 s. How verdicts are rendered
-  depends on the view mode (see below).
+  depends on the view mode (see below). It only acts on story listings: a
+  story's own page (`/item?id=...`) is left alone, and comment rows are never
+  touched.
 - **Background** answers cached stories immediately and queues the rest
   newest-declaration-first, so the top of the page you're looking at goes
   first. A story nobody has re-declared for 5 s is dropped, so navigating away
