@@ -144,5 +144,6 @@ export const AI_CHOICE_KEY = "ai";
 
 export const DOC_THRESHOLD = 0.5;
 
-/** Default probability at/above which a story is treated as "about AI". */
-export const DEFAULT_THRESHOLD = 0.5;
+/** Default probability at/above which a story is treated as "about AI".
+ * 0.51 is the Pareto-best cutoff on the labelled suite (title-only input). */
+export const DEFAULT_THRESHOLD = 0.51;

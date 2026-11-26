@@ -73,7 +73,8 @@ The first run downloads the model (~450 MB,
   newest-declaration-first, so the top of the page you're looking at goes
   first. A story nobody has re-declared for 5 s is dropped, so navigating away
   stops its work. Verdicts are cached in `storage.local`, keyed by a hash of
-  model + prompt + threshold so config changes invalidate them.
+  model + prompt so config changes invalidate them. Cached verdicts are raw
+  probabilities, so changing the cutoff does not discard them.
 - **Workers** (up to 8, spawned one at a time while there's a backlog) each load
   the model and classify one title at a time (~1.5 s each, single-threaded wasm).
   Each worker holds its own copy of the model: lower `MAX_WORKERS` in
@@ -97,8 +98,8 @@ Toggled with the *Debug view* button in the popup; **normal** is the default.
   hidden, so you can inspect the classifier's behaviour.
 
 The question is a 3-option `choice` (ai / ai-adjacent / not-ai); a story counts
-as AI when P(ai) ≥ threshold (default 0.5, adjustable in the popup). It's defined
-in `src/shared/config.ts`, mirrored from `tune/prompt.mjs`.
+as AI when P(ai) ≥ threshold (default 0.51, adjustable in the popup). It's
+defined in `src/shared/config.ts`, mirrored from `tune/prompt.mjs`.
 
 ## Tuning
 

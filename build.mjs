@@ -11,6 +11,7 @@ import { build, context } from "esbuild";
 import { cpSync, existsSync, mkdirSync, readFileSync, rmSync, statSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
+import { writeIcons } from "./build-icons.mjs";
 
 const root = dirname(fileURLToPath(import.meta.url));
 const watch = process.argv.includes("--watch");
@@ -59,6 +60,11 @@ function assets(target) {
   // glue finds it relative to its own URL)
   cpSync(NW_WASM, join(outbase, "nobodywho_minimal.wasm"));
 
+  // The extension icon (orange square, white H), rasterised at every size the
+  // browsers ask for. Generated rather than committed so it always matches the
+  // geometry in build-icons.mjs.
+  writeIcons(join(outbase, "icons"));
+
   const entries = { ...moduleEntries };
   if (target.offscreen) {
     cpSync(join(root, "src/offscreen/offscreen.html"), join(outbase, "offscreen/offscreen.html"));
@@ -105,6 +111,8 @@ function verify(target, outbase) {
     manifest.background?.service_worker,
     ...(manifest.content_scripts ?? []).flatMap((cs) => cs.js ?? []),
     manifest.action?.default_popup,
+    ...Object.values(manifest.icons ?? {}),
+    ...Object.values(manifest.action?.default_icon ?? {}),
   ].filter(Boolean);
   for (const ref of refs) {
     if (!existsSync(join(extRoot, ref))) throw new Error(`build guard: manifest references missing ${ref}`);

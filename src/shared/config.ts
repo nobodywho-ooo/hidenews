@@ -18,7 +18,11 @@ export const PROMPT = {
 
 export const AI_CHOICE_KEY = "ai";
 
-export const DEFAULT_THRESHOLD = 0.5;
+// Chosen by sweeping the labelled suite (test-suite/cases) with the title-only
+// input the extension actually sends. 0.51 is the Pareto-best cutoff: it hides
+// 2/67 non-AI stories while catching 12/23 AI ones. 0.45 was rejected because it
+// hides 8/67 humans for one extra AI story (see tune/sweep.mjs output).
+export const DEFAULT_THRESHOLD = 0.51;
 
 // The inference worker bundle, at the root of the built extension.
 export const HOST_WORKER = "host-worker.js";
@@ -43,11 +47,13 @@ export const VIEWS = {
 export type View = (typeof VIEWS)[keyof typeof VIEWS];
 export const DEFAULT_VIEW: View = VIEWS.NORMAL;
 
-// Version-stamp the verdict cache so that changing the model/prompt/threshold
-// (or upgrading the extension) silently invalidates stale verdicts instead of
-// serving results computed by an old configuration.
+// Version-stamp the verdict cache so that changing the model or prompt (or
+// upgrading the extension) silently invalidates stale verdicts instead of
+// serving results computed by an old configuration. The threshold is NOT part of
+// the version: cached verdicts are raw P(ai) probabilities, and the cutoff is
+// applied when rendering, so retuning it must not discard valid results.
 function cacheVersion(): string {
-  const src = MODEL_PATH + "\u0000" + JSON.stringify(PROMPT) + "\u0000" + String(DEFAULT_THRESHOLD);
+  const src = MODEL_PATH + "\u0000" + JSON.stringify(PROMPT);
   let h = 0x811c9dc5;
   for (let i = 0; i < src.length; i++) {
     h ^= src.charCodeAt(i);
