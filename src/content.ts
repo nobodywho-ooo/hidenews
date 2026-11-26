@@ -2,9 +2,9 @@
 // long-lived Port) which stories still need a verdict, and renders each row
 // when its verdict arrives. Two ways to render:
 //
-//   normal (default) — story rows stay hidden while being classified and are
+//   normal (default): story rows stay hidden while being classified and are
 //     only shown once a verdict says they're not filtered. Nothing else changes.
-//   debug — every row is tinted by P(ai), with a hover label and a badge, and
+//   debug: every row is tinted by P(ai), with a hover label and a badge, and
 //     nothing is ever hidden. Toggled from the popup.
 import { MODES, VIEWS, DEFAULT_THRESHOLD, DEFAULT_VIEW, type Mode, type View } from "./shared/config";
 

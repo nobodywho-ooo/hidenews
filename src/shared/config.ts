@@ -1,4 +1,4 @@
-// Shared configuration — the model, the classification prompt, thresholds.
+// Shared configuration: the model, the classification prompt, thresholds.
 // The prompt MUST stay in sync with tune/prompt.mjs (tests are run there).
 
 export const MODEL_PATH = "hf://ggml-org/Laya-GGUF/Laya-Q8_0.gguf";

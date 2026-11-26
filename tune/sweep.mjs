@@ -93,7 +93,7 @@ for (const pname of Object.keys(PROMOTS)) {
   }
 }
 
-// 3. Best by F1-ish (acc + balanced) — summarise top rows.
+// 3. Best by F1-ish (acc + balanced): summarise top rows.
 const best = [...rows].sort(
   (a, b) => b.acc - a.acc || b.rec - a.rec || a.fp - b.fp,
 )[0];

@@ -2,8 +2,8 @@
 //
 // Each browser has its own manifest (<browser>/manifest.json) and its own output
 // directory, because the two differ in how the background runs:
-//   firefox/ — event page (background.scripts); Workers are created directly.
-//   chrome/  — service worker (background.service_worker); Workers are created
+//   firefox/: event page (background.scripts); Workers are created directly.
+//   chrome/:  service worker (background.service_worker); Workers are created
 //              in an offscreen document, since a service worker cannot create
 //              them itself.
 // The bundles are otherwise identical; only Chrome also gets the offscreen page.
@@ -36,13 +36,13 @@ const esbuildOpts = {
   logLevel: "info",
 };
 
-// Classic (IIFE) contexts — content scripts and event-page background scripts
+// Classic (IIFE) contexts: content scripts and event-page background scripts
 // can't be ES modules in MV3.
 const classicEntries = {
   background: join(root, "src/background.ts"),
   content: join(root, "src/content.ts"),
 };
-// ES module contexts — extension pages and the worker bundles.
+// ES module contexts: extension pages and the worker bundles.
 const moduleEntries = {
   "popup/popup": join(root, "src/popup/popup.ts"),
   "host-worker": join(root, "src/host-worker.ts"),

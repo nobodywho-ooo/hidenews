@@ -1,6 +1,6 @@
 // Inference worker, spawned by the background (one per pool slot). Loads Laya
 // via nobodywho and classifies one title at a time. Stateless apart from the
-// loaded model; has no chrome.* APIs — it only talks to the background via
+// loaded model; has no chrome.* APIs. It only talks to the background via
 // postMessage:
 //   in:  {kind:"classify", id, title}
 //   out: {kind:"model-status", status, downloaded?, total?, message?}

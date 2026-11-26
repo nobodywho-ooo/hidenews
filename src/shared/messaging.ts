@@ -2,7 +2,7 @@
 //
 // In Firefox, `chrome.runtime.sendMessage` returns a Promise that *rejects*
 // when there is no receiver yet (e.g. the event-page background or host is
-// still waking). We usually don't care about that — it surfaces as an unhandled
+// still waking). We usually don't care about that; it surfaces as an unhandled
 // "Receiving end does not exist" rejection. This wraps the call, keeps the
 // optional callback (whose chrome.runtime.lastError still indicates a missing
 // receiver), and swallows the rejected promise.

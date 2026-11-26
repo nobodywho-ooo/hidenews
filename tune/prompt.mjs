@@ -1,5 +1,5 @@
 // Laya prompt variants explored during tuning. The winner (HIDE_AI_PROMPT) is
-// mirrored in src/shared/config.ts (PROMPT) — keep the two in sync.
+// mirrored in src/shared/config.ts (PROMPT); keep the two in sync.
 
 // Baseline terse prompt (best separation observed so far).
 export const HIDE_AI_PROMPT_SIMPLE = {
@@ -67,7 +67,7 @@ export const HIDE_AI_PROMPT_COMPANIES = {
     instructions: "Is this story about an AI company, AI model, LLM, AI agent, or AI hardware?",
     criteria: {
       true: "AI companies (OpenAI, Anthropic, Google DeepMind, Microsoft, Meta AI, Nvidia, xAI, Mistral, DeepSeek, Qwen, GLM); AI model/LLM releases; AI agents, coding agents, AI coding tools; AI chips and AI hardware",
-      false: "software engineering, security, databases, operating systems, science, math, games, politics, finance — anything not about AI",
+      false: "software engineering, security, databases, operating systems, science, math, games, politics, finance, or anything not about AI",
     },
   },
 };

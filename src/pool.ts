@@ -6,7 +6,7 @@
 // wherever a Worker is available:
 //   - Firefox: directly in the background event page.
 //   - Chrome: in an offscreen document (an MV3 service worker cannot create
-//     Workers — `Worker` is not exposed in ServiceWorkerGlobalScope).
+//     Workers: `Worker` is not exposed in ServiceWorkerGlobalScope).
 //
 // Every classify() call is answered by exactly one terminal event: "verdict",
 // "classify-error" or "cancelled".

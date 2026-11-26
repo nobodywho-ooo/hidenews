@@ -3,7 +3,7 @@
 A browser extension (MV3, Firefox first) that marks Hacker News stories about
 AI/LLMs, using the [Laya](https://huggingface.co/ggml-org/Laya-GGUF) decision
 model running fully on-device via nobodywho
-(WebAssembly — no server, no cloud).
+(WebAssembly: no server, no cloud).
 
 ## Layout
 
@@ -64,7 +64,7 @@ The first run downloads the model (~450 MB,
 ## How it works
 
 - **Content script** declares the stories it still needs over a long-lived
-  Port — on load, on DOM changes and every 2 s. How verdicts are rendered
+  Port: on load, on DOM changes and every 2 s. How verdicts are rendered
   depends on the view mode (see below).
 - **Background** answers cached stories immediately and queues the rest
   newest-declaration-first, so the top of the page you're looking at goes
@@ -76,8 +76,8 @@ The first run downloads the model (~450 MB,
   Each worker holds its own copy of the model: lower `MAX_WORKERS` in
   `src/shared/config.ts` if memory is a concern.
 - **Where the workers live** depends on the browser. Firefox's event page can
-  create Workers directly. Chrome's MV3 service worker cannot — the spec doesn't
-  expose `Worker` to service workers — so there the pool runs in an **offscreen
+  create Workers directly. Chrome's MV3 service worker cannot: the spec doesn't
+  expose `Worker` to service workers, so there the pool runs in an **offscreen
   page** (`reason: "WORKERS"`) and the background talks to it over runtime
   messages. The offscreen page is invisible and stays alive as long as the
   extension runs.
@@ -86,10 +86,10 @@ The first run downloads the model (~450 MB,
 
 Toggled with the *Debug view* button in the popup; **normal** is the default.
 
-- **Normal** — the real experience. Story rows are hidden while they're being
+- **Normal**: the real experience. Story rows are hidden while they're being
   classified; once a verdict arrives, stories matching the filter stay hidden
   and kept stories are shown exactly as they were. No other cosmetic changes.
-- **Debug** — every row is tinted green→red by P(ai), with a hover label and a
+- **Debug**: every row is tinted green→red by P(ai), with a hover label and a
   badge showing the probability and whether it would be filtered. Nothing is
   hidden, so you can inspect the classifier's behaviour.
 

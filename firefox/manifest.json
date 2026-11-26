@@ -1,6 +1,6 @@
 {
   "manifest_version": 3,
-  "name": "hidenews \u2014 de-AI your Hacker News",
+  "name": "hidenews: de-AI your Hacker News",
   "version": "0.1.0",
   "description": "Filter Hacker News stories by whether they're about AI/LLMs, using an on-device Laya decision model.",
   "permissions": [

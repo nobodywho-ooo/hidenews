@@ -31,7 +31,7 @@ const FF_PROFILE = join(root, "tmp/ff-profile");
 function buildTestExtension() {
   rmSync(EX_DIR, { recursive: true, force: true });
   mkdirSync(EX_DIR, { recursive: true });
-  // Real copy — Firefox's temporary add-on loader won't follow a symlinked dist.
+  // Real copy: Firefox's temporary add-on loader won't follow a symlinked dist.
   cpSync(join(root, "firefox/dist"), join(EX_DIR, "dist"), { recursive: true });
   const m = JSON.parse(readFileSync(join(root, "firefox/manifest.json"), "utf8"));
   m.content_scripts = [
