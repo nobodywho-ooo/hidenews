@@ -14,6 +14,13 @@ declare const chrome: any;
 
 document.documentElement.dataset.hidenewsCt = "loaded"; // marker for the browser test
 
+// Only story listings are filtered. A story's own page (/item?id=...) shows one
+// story plus its comments, and neither should be touched; comment listings have
+// no submission rows at all. Elsewhere the script stays completely idle, so the
+// settings callback and storage listener below can never style anything.
+const STORY_PAGE = /^\/item\/?$/;
+const ACTIVE = !STORY_PAGE.test(location.pathname) && storyRows().length > 0;
+
 const DECLARE_INTERVAL_MS = 2000; // must stay well below the background's 5 s TTL
 const verdicts = new Map<string, number>(); // id -> P(ai)
 const failed = new Set<string>(); // gave up (background already retried)
@@ -180,6 +187,7 @@ function onVerdict(id: string, p: number) {
 }
 /** Re-render every story row from the current state (after a settings change). */
 function renderAll() {
+  if (!ACTIVE) return;
   for (const row of storyRows()) {
     const id = row.id;
     if (!id) continue;
@@ -206,11 +214,7 @@ function declare() {
   } catch {}
 }
 
-// Only story listings are filtered. A story's own page (/item?id=...) shows one
-// story plus its comments, and neither should be touched; comment listings have
-// no submission rows at all. On such pages the extension stays completely idle.
-const STORY_PAGE = /^\/item\/?$/;
-if (!STORY_PAGE.test(location.pathname) && storyRows().length > 0) {
+if (ACTIVE) {
   connect();
   declare();
   new MutationObserver(declare).observe(document.body, { childList: true, subtree: true });
