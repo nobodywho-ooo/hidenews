@@ -15,27 +15,30 @@ declare const chrome: any;
 
 let pool: Pool | null = null;
 
+// Every command the background can send. Keep this in sync with the Pool
+// interface in src/pool.ts: a command with no handler here is silently dropped
+// (which is how the pool used to stay stuck at one worker, because "grow" was
+// missing).
+const commands: Record<string, (msg: any) => void> = {
+  spawn: (msg) => {
+    if (!pool) {
+      pool = createWorkerPool({
+        workerUrl: msg.workerUrl,
+        maxWorkers: MAX_WORKERS,
+        onEvent: (event) => {
+          chrome.runtime.sendMessage({ kind: "pool-event", event }).catch(() => {});
+        },
+      });
+    }
+    pool.spawn();
+  },
+  grow: () => pool?.grow(),
+  classify: (msg) => pool?.classify(msg.id, msg.title),
+  cancel: (msg) => pool?.cancel(msg.id),
+};
+
 chrome.runtime.onMessage.addListener((msg: any) => {
-  switch (msg?.kind) {
-    case "spawn":
-      if (!pool) {
-        pool = createWorkerPool({
-          workerUrl: msg.workerUrl,
-          maxWorkers: MAX_WORKERS,
-          onEvent: (event) => {
-            chrome.runtime.sendMessage({ kind: "pool-event", event }).catch(() => {});
-          },
-        });
-      }
-      pool.spawn();
-      break;
-    case "classify":
-      pool?.classify(msg.id, msg.title);
-      break;
-    case "cancel":
-      pool?.cancel(msg.id);
-      break;
-  }
+  commands[msg?.kind]?.(msg);
 });
 
 // Tell the background we're listening; it flushes any commands queued while the

@@ -77,6 +77,16 @@ test("chrome ships the offscreen page; firefox does not", () => {
   assert.ok(!existsSync(join(dist("firefox"), "offscreen")));
 });
 
+test("chrome offscreen handles every pool command", () => {
+  // The background drives the pool over runtime messages; a command with no
+  // handler here is silently dropped ("grow" was missing, so the pool never
+  // grew past one worker). Keep this in sync with the Pool interface.
+  const js = readFileSync(join(dist("chrome"), "offscreen/offscreen.js"), "utf8");
+  for (const cmd of ["spawn", "grow", "classify", "cancel"]) {
+    assert.ok(js.includes(`${cmd}:`), `offscreen should handle the "${cmd}" command`);
+  }
+});
+
 test("background resolves the pool per browser", () => {
   const chromeJs = readFileSync(join(dist("chrome"), "background.js"), "utf8");
   const firefoxJs = readFileSync(join(dist("firefox"), "background.js"), "utf8");
