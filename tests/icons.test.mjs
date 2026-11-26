@@ -53,9 +53,14 @@ test("writes every size plus an SVG, deterministically", () => {
       const png = decodePng(readFileSync(join(dir, `icon-${size}.png`)));
       assert.equal(png.width, size);
       assert.equal(png.height, size);
-      // corners are the HN orange background, the middle of the H is white
+      // The corner is the HN orange background. Sample a point safely inside the
+      // left stem (design space 37,64 = the stem's centre) rather than the exact
+      // canvas centre: with a thin crossbar the centre pixel is only partly
+      // covered at 16px, so it is a blend rather than pure white.
+      const stemX = Math.floor((37 * size) / 128);
+      const stemY = Math.floor((64 * size) / 128);
       assert.deepEqual(png.pixel(0, 0), [0xff, 0x66, 0x00], `corner at ${size}px`);
-      assert.deepEqual(png.pixel(size >> 1, size >> 1), [0xff, 0xff, 0xff], `centre at ${size}px`);
+      assert.deepEqual(png.pixel(stemX, stemY), [0xff, 0xff, 0xff], `stem at ${size}px`);
     }
   } finally {
     rmSync(dir, { recursive: true, force: true });

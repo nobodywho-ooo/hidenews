@@ -18,12 +18,16 @@ const WHITE_RGB = [0xff, 0xff, 0xff];
 const CANVAS = 128;
 const SUPERSAMPLE = 4; // anti-aliasing: render N x N per output pixel, then average
 
-// The H, as three rectangles. Deliberately thick and flat-ended, like the YC Y.
-const LEFT = { x0: 30, x1: 50 };
-const RIGHT = { x0: 78, x1: 98 };
+// The H, as three rectangles. Flat-ended strokes like the YC Y, but lighter:
+// STROKE is the stem width and the crossbar thickness. Lower it for a thinner
+// H (it must stay an even number so the mark stays centred on the canvas).
+const STROKE = 14;
 const TOP = 28;
 const BOTTOM = 100;
-const BAR = { y0: 54, y1: 74 };
+const MID = (TOP + BOTTOM) / 2;
+const LEFT = { x0: 30, x1: 30 + STROKE };
+const RIGHT = { x0: 98 - STROKE, x1: 98 };
+const BAR = { y0: MID - STROKE / 2, y1: MID + STROKE / 2 };
 
 const RECTS = [
   { x: LEFT.x0, y: TOP, w: LEFT.x1 - LEFT.x0, h: BOTTOM - TOP },
