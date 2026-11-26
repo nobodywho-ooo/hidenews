@@ -1,6 +1,6 @@
 // Unit tests for the worker pool (src/pool.ts), bundled on the fly and driven
-// with a fake Worker. Catches the "spawn() grows the pool on every wake" bug:
-// spawn() must be idempotent, growth must come from grow()/backlog.
+// with a fake Worker. The pool starts every worker up front; spawn() must be
+// idempotent so repeated wakes don't create more.
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { mkdirSync } from "node:fs";
@@ -44,40 +44,29 @@ function fakeWorker({ verdictDelay = 1 } = {}) {
 
 const tick = (ms = 10) => new Promise((r) => setTimeout(r, ms));
 
-test("spawn() is idempotent: repeated calls create one worker", async () => {
+test("spawn() starts the whole pool and is idempotent", async () => {
   const { FakeWorker, created } = fakeWorker();
   globalThis.Worker = FakeWorker;
   const events = [];
-  const pool = createWorkerPool({ workerUrl: "w.js", maxWorkers: 8, onEvent: (e) => events.push(e) });
+  const pool = createWorkerPool({ workerUrl: "w.js", maxWorkers: 4, onEvent: (e) => events.push(e) });
 
-  for (let i = 0; i < 5; i++) pool.spawn(); // one per service-worker wake
-  await tick();
-  assert.equal(created.length, 1, "spawn() must not add a worker to a warm pool");
-  assert.equal(events.filter((e) => e.kind === "capacity").at(-1).ready, 1);
-});
-
-test("backlog grows the pool up to maxWorkers", async () => {
-  const { FakeWorker, created } = fakeWorker();
-  globalThis.Worker = FakeWorker;
-  const pool = createWorkerPool({ workerUrl: "w.js", maxWorkers: 4, onEvent: () => {} });
-
+  pool.spawn(); // start the whole pool up front
+  pool.spawn(); // repeated calls (one per service-worker wake) must not add more
   pool.spawn();
-  for (let i = 0; i < 20; i++) pool.classify(`id${i}`, `title ${i}`);
-  await tick(20);
-  assert.equal(created.length, 4, "should grow to the cap, not beyond");
+  await tick();
+  assert.equal(created.length, 4, "spawn() should start every worker, and only once");
+  assert.equal(events.filter((e) => e.kind === "capacity").at(-1).total, 4);
 });
 
-test("grow() adds one worker and never exceeds the cap", async () => {
+test("the pool never exceeds its cap", async () => {
   const { FakeWorker, created } = fakeWorker();
   globalThis.Worker = FakeWorker;
   const pool = createWorkerPool({ workerUrl: "w.js", maxWorkers: 3, onEvent: () => {} });
 
   pool.spawn();
-  pool.grow();
-  pool.grow();
-  pool.grow();
+  for (let i = 0; i < 20; i++) pool.classify(`id${i}`, `title ${i}`);
   await tick();
-  assert.equal(created.length, 3);
+  assert.equal(created.length, 3, "should not create more workers than the cap");
 });
 
 test("every classify is answered exactly once", async () => {

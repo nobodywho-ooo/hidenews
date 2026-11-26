@@ -88,10 +88,10 @@ The first run downloads the model (~450 MB,
   stops its work. Verdicts are cached in `storage.local`, keyed by a hash of
   model + prompt so config changes invalidate them. Cached verdicts are raw
   probabilities, so changing the cutoff does not discard them.
-- **Workers** (up to 8, spawned one at a time while there's a backlog) each load
-  the model and classify one title at a time (~1.5 s each, single-threaded wasm).
-  Each worker holds its own copy of the model: lower `MAX_WORKERS` in
-  `src/shared/config.ts` if memory is a concern.
+- **Workers** (4, all started up front) each load the model and classify one
+  title at a time (~1.5 s each, single-threaded wasm). Each worker holds its own
+  copy of the model (~450 MB), so the count is the memory limit: change
+  `MAX_WORKERS` in `src/shared/config.ts`.
 - **Where the workers live** depends on the browser. Firefox's event page can
   create Workers directly. Chrome's MV3 service worker cannot: the spec doesn't
   expose `Worker` to service workers, so there the pool runs in an **offscreen

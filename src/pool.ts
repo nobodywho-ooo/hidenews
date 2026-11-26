@@ -1,6 +1,6 @@
 // A pool of inference workers. Each worker is a module Worker that loads the
-// Laya model and classifies one title at a time; the pool grows on demand up to
-// a cap and reports everything that happens through `onEvent`.
+// Laya model and classifies one title at a time. The whole pool starts at once
+// (the model is the expensive part) and reports everything via `onEvent`.
 //
 // This module is deliberately context-free (no chrome.* calls) so it can run
 // wherever a Worker is available:
@@ -20,10 +20,8 @@ export type PoolEvent =
   | { kind: "cancelled"; id: string };
 
 export interface Pool {
-  /** Ensure the pool is running. Idempotent: safe to call on every wake. */
+  /** Ensure the whole pool is running. Idempotent: safe to call on every wake. */
   spawn(): void;
-  /** Add one worker if the pool is below its cap. */
-  grow(): void;
   /** Queue one classification. Terminal event follows. */
   classify(id: string, title: string): void;
   /** Drop a queued classification that has not started yet. */
@@ -77,11 +75,11 @@ export function createWorkerPool(opts: {
     return true;
   }
 
-  /** Ensure the pool is running. Idempotent: calling it on an already warm pool
-   * only re-reports capacity (the background calls it on every wake). */
+  /** Start the whole pool. Idempotent: calling it on an already warm pool only
+   * re-reports capacity (the background calls it on every wake). */
   function spawn() {
-    if (workers.length === 0) addWorker();
-    else emitCapacity();
+    while (workers.length < maxWorkers && addWorker()) {}
+    emitCapacity();
   }
 
   function dispatch() {
@@ -92,8 +90,6 @@ export function createWorkerPool(opts: {
       busy.set(w, task.id);
       w.postMessage({ kind: "classify", id: task.id, title: task.title });
     }
-    // Grow the pool only when there is more work than workers to do it.
-    if (pending.length > workers.length) addWorker();
   }
 
   function handle(w: Worker, msg: any) {
@@ -129,9 +125,6 @@ export function createWorkerPool(opts: {
 
   return {
     spawn,
-    grow: () => {
-      addWorker();
-    },
     classify(id, title) {
       if (failed) {
         onEvent({ kind: "classify-error", id, error: "model unavailable" });

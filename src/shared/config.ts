@@ -30,7 +30,7 @@ export const HOST_WORKER = "host-worker.js";
 
 // Parallel inferences. Each worker loads its own copy of the model, so this is a
 // memory/throughput trade-off (roughly 450 MB of model per worker).
-export const MAX_WORKERS = 8;
+export const MAX_WORKERS = 4;
 
 export const MODES = {
   HIDE_AI: "hide-ai",

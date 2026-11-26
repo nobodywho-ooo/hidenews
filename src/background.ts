@@ -44,7 +44,6 @@ let status: { status: string; message?: string; downloaded?: number; total?: num
 let modelReady = false; // at least one worker has loaded the model
 let modelError: string | null = null;
 let poolReady = 0; // workers that finished loading (i.e. how many can run at once)
-let poolTotal = 0; // workers spawned so far
 
 // ---- verdict cache: id -> P(ai), persisted under a versioned key ----
 const cache = new Map<string, number>(); // insertion order = age (for eviction)
@@ -179,8 +178,6 @@ function pump() {
       inFlight.add(id);
       pool.classify(id, item.title);
     }
-    // Backlog and every worker busy: ask the pool for one more worker.
-    if (queue.length > 0 && poolReady === poolTotal && poolTotal < MAX_WORKERS) pool.grow();
   } finally {
     pumping = false;
   }
@@ -210,7 +207,6 @@ function onPoolEvent(ev: PoolEvent) {
       break;
     case "capacity":
       poolReady = ev.ready;
-      poolTotal = ev.total;
       if (poolReady > 0 && !modelReady) {
         // A warm pool means the model is loaded. This also covers the Chrome
         // case where the service worker restarted while the offscreen pool
@@ -321,7 +317,6 @@ function createRemotePool(): Pool {
   };
   return {
     spawn: () => command({ kind: "spawn", workerUrl: WORKER_URL }),
-    grow: () => command({ kind: "grow" }),
     classify: (id: string, title: string) => command({ kind: "classify", id, title }),
     cancel: (id: string) => command({ kind: "cancel", id }),
   };
@@ -361,4 +356,4 @@ chrome.storage.local.get(["mode", "threshold"], (v: any) => {
   }
 });
 
-pool.spawn(); // warm the model right away; the pool grows on demand
+pool.spawn(); // start the whole pool right away; the model loads per worker

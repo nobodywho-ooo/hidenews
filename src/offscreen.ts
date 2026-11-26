@@ -16,9 +16,7 @@ declare const chrome: any;
 let pool: Pool | null = null;
 
 // Every command the background can send. Keep this in sync with the Pool
-// interface in src/pool.ts: a command with no handler here is silently dropped
-// (which is how the pool used to stay stuck at one worker, because "grow" was
-// missing).
+// interface in src/pool.ts: a command with no handler here is silently dropped.
 const commands: Record<string, (msg: any) => void> = {
   spawn: (msg) => {
     if (!pool) {
@@ -32,7 +30,6 @@ const commands: Record<string, (msg: any) => void> = {
     }
     pool.spawn();
   },
-  grow: () => pool?.grow(),
   classify: (msg) => pool?.classify(msg.id, msg.title),
   cancel: (msg) => pool?.cancel(msg.id),
 };
