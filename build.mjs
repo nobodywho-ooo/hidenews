@@ -1,116 +1,122 @@
-// Build the MV3 extension with esbuild into dist/: bundle each entry and copy
-// the static assets (popup.html/css, the nobodywho wasm binary).
+// Build the extension for each browser into <browser>/dist/.
+//
+// Each browser has its own manifest (<browser>/manifest.json) and its own output
+// directory, because the two differ in how the background runs:
+//   firefox/ — event page (background.scripts); Workers are created directly.
+//   chrome/  — service worker (background.service_worker); Workers are created
+//              in an offscreen document, since a service worker cannot create
+//              them itself.
+// The bundles are otherwise identical; only Chrome also gets the offscreen page.
 import { build, context } from "esbuild";
-import { cpSync, mkdirSync, readFileSync, rmSync, statSync, writeFileSync } from "node:fs";
+import { cpSync, existsSync, mkdirSync, readFileSync, rmSync, statSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const root = dirname(fileURLToPath(import.meta.url));
-const outbase = join(root, "dist");
 const watch = process.argv.includes("--watch");
 
-// nobodywho is resolved straight from its repo checkout, a sibling of this one
-// (../nobodywho), rather than through node_modules.
+// nobodywho is resolved from a sibling checkout.
 const NW = join(root, "..", "nobodywho", "nobodywho", "js");
 const NW_ENTRY = join(NW, "dist", "index.mjs");
 const NW_WASM = join(NW, "dist", "nobodywho_minimal.wasm");
 
+const targets = [
+  { name: "firefox", offscreen: false },
+  { name: "chrome", offscreen: true },
+];
+
 const esbuildOpts = {
   bundle: true,
   platform: "browser",
-  target: ["chrome95", "firefox115"],
-  sourcemap: false, // devtools can't resolve these from the wasm-async worker load; silence the noise
+  target: ["chrome116", "firefox115"],
+  sourcemap: false, // dev noise; the wasm glue locates its binary by URL anyway
   alias: { "react-native-nobodywho": NW_ENTRY },
-  // node builtins are only touched on the Node path (guarded at runtime in the
-  // browser), so keep them un-bundled.
-  external: [
-    "node:module", "node:fs", "node:path", "node:url", "node:util",
-    "node:async_hooks", "node:v8", "node:buffer",
-  ],
+  // node builtins the glue references but never needs in the browser
+  external: ["node:fs", "node:path", "node:url", "node:module"],
   logLevel: "info",
 };
 
 // Classic (IIFE) contexts — content scripts and event-page background scripts
-// can't use ESM import/export in MV3.
+// can't be ES modules in MV3.
 const classicEntries = {
   background: join(root, "src/background.ts"),
   content: join(root, "src/content.ts"),
 };
-// ES module contexts — the popup page and the background-spawned host worker.
+// ES module contexts — extension pages and the worker bundles.
 const moduleEntries = {
   "popup/popup": join(root, "src/popup/popup.ts"),
   "host-worker": join(root, "src/host-worker.ts"),
 };
 
-async function main() {
-  // Start from a clean dist so a stale/mixed artifact can never be served.
+function assets(target) {
+  const outbase = join(root, target.name, "dist");
   rmSync(outbase, { recursive: true, force: true });
   mkdirSync(join(outbase, "popup"), { recursive: true });
 
-  // static assets
   cpSync(join(root, "src/popup/popup.html"), join(outbase, "popup/popup.html"));
   cpSync(join(root, "src/popup/popup.css"), join(outbase, "popup/popup.css"));
-
-  // the nobodywho wasm binary, next to the host-worker bundle (located via
-  // import.meta.url from the emscripten glue).
+  cpSync(join(root, target.name, "manifest.json"), join(outbase, "manifest.json"));
+  // the nobodywho wasm binary, next to the host-worker bundle (the emscripten
+  // glue finds it relative to its own URL)
   cpSync(NW_WASM, join(outbase, "nobodywho_minimal.wasm"));
 
-  writeChromeManifest();
-
-  const buildClassic = () => build({ ...esbuildOpts, format: "iife", entryPoints: classicEntries, outdir: outbase });
-  const buildModule = () => build({ ...esbuildOpts, format: "esm", entryPoints: moduleEntries, outdir: outbase });
-
-  if (watch) {
-    const cc = await context({ ...esbuildOpts, format: "iife", entryPoints: classicEntries, outdir: outbase });
-    const mc = await context({ ...esbuildOpts, format: "esm", entryPoints: moduleEntries, outdir: outbase });
-    await Promise.all([cc.watch(), mc.watch()]);
-    console.log("watching…");
-  } else {
-    await buildClassic();
-    await buildModule();
-    verify();
+  const entries = { ...moduleEntries };
+  if (target.offscreen) {
+    cpSync(join(root, "src/offscreen/offscreen.html"), join(outbase, "offscreen/offscreen.html"));
+    entries["offscreen/offscreen"] = join(root, "src/offscreen.ts");
   }
+  return { outbase, entries };
 }
 
-// Chrome loads the extension from dist/ (its manifest must use MV3's
-// background.service_worker). Firefox loads the repo-root manifest, which uses
-// the event-page background.scripts (Firefox's service_worker support is still
-// disabled). Same bundles, two manifests.
-function writeChromeManifest() {
-  const src = JSON.parse(readFileSync(join(root, "manifest.json"), "utf8"));
-  const strip = (p) => p.replace(/^dist\//, "");
-  const chrome = {
-    ...src,
-    background: { service_worker: strip(src.background.scripts[0]) },
-    content_scripts: src.content_scripts.map((cs) => ({ ...cs, js: cs.js.map(strip) })),
-    action: { ...src.action, default_popup: strip(src.action.default_popup) },
-  };
-  delete chrome.browser_specific_settings;
-  writeFileSync(join(outbase, "manifest.json"), JSON.stringify(chrome, null, 2) + "\n");
+async function buildTarget(target) {
+  const { outbase, entries } = assets(target);
+  await build({ ...esbuildOpts, format: "iife", entryPoints: classicEntries, outdir: outbase });
+  await build({ ...esbuildOpts, format: "esm", entryPoints: entries, outdir: outbase });
+  verify(target, outbase);
 }
 
-// Sanity gates so a regression can never silently reach the browser:
-// 1) the worker bundle must not contain node-only FS glue (the NODERAWFS
-//    throw), and 2) the copied wasm must actually be non-trivial.
-const FORBIDDEN_IN_PAGE_BUNDLE = [
+async function watchTarget(target) {
+  const { outbase, entries } = assets(target);
+  const cc = await context({ ...esbuildOpts, format: "iife", entryPoints: classicEntries, outdir: outbase });
+  const mc = await context({ ...esbuildOpts, format: "esm", entryPoints: entries, outdir: outbase });
+  await Promise.all([cc.watch(), mc.watch()]);
+  console.log(`watching ${target.name}…`);
+}
+
+// Sanity gates so a regression can never silently reach the browser.
+const FORBIDDEN_IN_WORKER = [
   "NODERAWFS is currently only supported on Node.js environment",
-  "only supported in the Node.js environment",
+  "only supported in Node.js",
 ];
-const MIN_WASM_BYTES = 100 * 1024 * 1024;
+const MIN_WASM = 100 * 1024 * 1024;
 
-function verify() {
-  const bundle = readFileSync(join(outbase, "host-worker.js"), "utf8");
-  for (const s of FORBIDDEN_IN_PAGE_BUNDLE) {
-    if (bundle.includes(s)) {
-      throw new Error(`build guard: worker bundle contains node-only FS glue (${JSON.stringify(s)}). Aborting.`);
-    }
+function verify(target, outbase) {
+  const worker = readFileSync(join(outbase, "host-worker.js"), "utf8");
+  for (const needle of FORBIDDEN_IN_WORKER) {
+    if (worker.includes(needle)) throw new Error(`build guard: worker bundle contains ${JSON.stringify(needle)}`);
   }
-  const wasm = join(outbase, "nobodywho_minimal.wasm");
-  const size = statSync(wasm).size;
-  if (size < MIN_WASM_BYTES) {
-    throw new Error(`build guard: wasm too small (${size} bytes) — likely a truncated/stale copy.`);
+  const wasm = statSync(join(outbase, "nobodywho_minimal.wasm")).size;
+  if (wasm < MIN_WASM) throw new Error(`build guard: wasm is only ${wasm} bytes`);
+
+  // every path the manifest points at must exist in the output
+  const manifest = JSON.parse(readFileSync(join(outbase, "manifest.json"), "utf8"));
+  const refs = [
+    ...(manifest.background?.scripts ?? []),
+    manifest.background?.service_worker,
+    ...(manifest.content_scripts ?? []).flatMap((cs) => cs.js ?? []),
+    manifest.action?.default_popup,
+  ].filter(Boolean);
+  for (const ref of refs) {
+    if (!existsSync(join(outbase, ref))) throw new Error(`build guard: manifest references missing ${ref}`);
   }
-  console.log(`guard: ok (bundle clean, wasm ${(size / 1048576).toFixed(0)} MB)`);
+  console.log(`guard: ${target.name} ok (wasm ${(wasm / 1048576).toFixed(0)} MB)`);
+}
+
+async function main() {
+  for (const target of targets) {
+    if (watch) await watchTarget(target);
+    else await buildTarget(target);
+  }
 }
 
 main().catch((e) => {

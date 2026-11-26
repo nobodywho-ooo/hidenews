@@ -20,6 +20,13 @@ export const AI_CHOICE_KEY = "ai";
 
 export const DEFAULT_THRESHOLD = 0.5;
 
+// The inference worker bundle, at the root of the built extension.
+export const HOST_WORKER = "host-worker.js";
+
+// Parallel inferences. Each worker loads its own copy of the model, so this is a
+// memory/throughput trade-off (roughly 450 MB of model per worker).
+export const MAX_WORKERS = 8;
+
 export const MODES = {
   HIDE_AI: "hide-ai",
   ONLY_AI: "only-ai",

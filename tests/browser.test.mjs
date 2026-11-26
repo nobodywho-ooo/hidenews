@@ -1,7 +1,7 @@
 // Browser integration test: loads the REAL extension into headless Firefox and
 // asserts the classification pipeline works end-to-end on a local HN-like page.
 //
-// Requires: npm run build (dist/), geckodriver, Firefox.app.
+// Requires: npm run build (firefox/dist), geckodriver, Firefox.app.
 // Run:      npm run test:browser
 //
 // First run downloads the ~450 MB model into the test Firefox profile (slow);
@@ -26,18 +26,18 @@ const EX_DIR = join(root, "tmp/test-ext");
 // first run downloads ~450 MB, later runs reuse it.
 const FF_PROFILE = join(root, "tmp/ff-profile");
 
-// Build a test-only extension dir: real dist + manifest, but with a content_script
-// that also matches the local fixture origin.
+// Build a test-only extension dir: the real Firefox build, but with a
+// content_script that also matches the local fixture origin.
 function buildTestExtension() {
   rmSync(EX_DIR, { recursive: true, force: true });
   mkdirSync(EX_DIR, { recursive: true });
-  const m = JSON.parse(readFileSync(join(root, "manifest.json"), "utf8"));
+  // Real copy — Firefox's temporary add-on loader won't follow a symlinked dist.
+  cpSync(join(root, "firefox/dist"), EX_DIR, { recursive: true });
+  const m = JSON.parse(readFileSync(join(root, "firefox/manifest.json"), "utf8"));
   m.content_scripts = [
-    { matches: ["*://news.ycombinator.com/*", `http://127.0.0.1:${FIXTURE_PORT}/*`], js: ["dist/content.js"], run_at: "document_idle" },
+    { matches: ["*://news.ycombinator.com/*", `http://127.0.0.1:${FIXTURE_PORT}/*`], js: ["content.js"], run_at: "document_idle" },
   ];
   writeFileSync(join(EX_DIR, "manifest.json"), JSON.stringify(m, null, 2));
-  // Real copy — Firefox's temporary add-on loader won't follow a symlinked dist.
-  cpSync(join(root, "dist"), join(EX_DIR, "dist"), { recursive: true });
   return EX_DIR;
 }
 

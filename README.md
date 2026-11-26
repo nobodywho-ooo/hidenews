@@ -8,19 +8,29 @@ model running fully on-device via nobodywho
 ## Layout
 
 ```
-manifest.json        extension manifest (loads dist/)
-build.mjs            esbuild → dist/
+firefox/manifest.json  Firefox manifest (event-page background)
+firefox/dist/          build output — this is what you load in Firefox
+chrome/manifest.json   Chrome manifest (service worker + offscreen)
+chrome/dist/           build output — this is what you load in Chrome
+build.mjs              esbuild → <browser>/dist/
 src/
-  background.ts      queue, verdict cache, worker pool
-  host-worker.ts     inference worker (nobodywho + Laya)
-  content.ts         HN page: declares stories, styles rows
-  popup/             settings + model status
-  shared/config.ts   model, prompt, threshold, cache versioning
-tests/               static bundle checks + headless-Firefox test
-test-suite/          hand-labelled cases (persistent tuning suite)
-test-data/           HN snapshots + model predictions
-tune/                tuning scripts (init-suite, analyze, sweep, report)
+  background.ts        queue, verdict cache, page ports
+  pool.ts              worker pool (browser-agnostic)
+  host-worker.ts       inference worker (nobodywho + Laya)
+  offscreen.ts         Chrome-only: hosts the pool in an offscreen page
+  content.ts           HN page: declares stories, styles rows
+  popup/               settings + model status
+  shared/config.ts     model, prompt, threshold, cache versioning
+tests/                 static bundle checks + headless-Firefox test
+test-suite/            hand-labelled cases (persistent tuning suite)
+test-data/             HN snapshots + model predictions
+tune/                  tuning scripts (init-suite, analyze, sweep, report)
 ```
+
+The two browsers need different manifests: Firefox's MV3 background is an event
+page (`background.scripts`), while Chrome's is a service worker
+(`background.service_worker`). The bundles are otherwise identical, except that
+Chrome also ships the offscreen page (see below).
 
 ## Build
 
@@ -30,23 +40,20 @@ wasm already built (`nobodywho/js/dist/nobodywho_minimal.wasm`, ~366 MB;
 
 ```bash
 npm install
-npm run build        # → dist/   (npm run watch to rebuild on change)
+npm run build        # → firefox/dist and chrome/dist   (npm run watch to rebuild)
 npm run typecheck
-npm test             # static checks on dist/
+npm test             # static checks on both builds
 npm run test:browser # end-to-end in headless Firefox (geckodriver + Firefox.app)
 ```
 
 ## Load it
 
 **Firefox**: `about:debugging#/runtime/this-firefox` → *Load Temporary Add-on* →
-`manifest.json` (the repo-root one, which uses the event-page background).
-After a rebuild, *Remove* and re-load rather than *Reload*, so the ~366 MB wasm
-isn't served stale.
+`firefox/dist/manifest.json`. After a rebuild, *Remove* and re-load rather than
+*Reload*, so the ~366 MB wasm isn't served stale.
 
-**Chrome/Edge**: `npm run build`, then `chrome://extensions` → *Developer mode* →
-*Load unpacked* → the `dist/` directory. `dist/manifest.json` is generated with
-MV3's `background.service_worker` (Chrome rejects the event-page
-`background.scripts`), and its paths are relative to `dist/`.
+**Chrome/Edge**: `chrome://extensions` → *Developer mode* → *Load unpacked* →
+the `chrome/dist/` directory.
 
 The first run downloads the model (~450 MB,
 `hf://ggml-org/Laya-GGUF/Laya-Q8_0.gguf`) into IndexedDB.
@@ -64,7 +71,13 @@ The first run downloads the model (~450 MB,
 - **Workers** (up to 8, spawned one at a time while there's a backlog) each load
   the model and classify one title at a time (~1.5 s each, single-threaded wasm).
   Each worker holds its own copy of the model: lower `MAX_WORKERS` in
-  `src/background.ts` if memory is a concern.
+  `src/shared/config.ts` if memory is a concern.
+- **Where the workers live** depends on the browser. Firefox's event page can
+  create Workers directly. Chrome's MV3 service worker cannot — the spec doesn't
+  expose `Worker` to service workers — so there the pool runs in an **offscreen
+  page** (`reason: "WORKERS"`) and the background talks to it over runtime
+  messages. The offscreen page is invisible and stays alive as long as the
+  extension runs.
 
 ### View modes
 
