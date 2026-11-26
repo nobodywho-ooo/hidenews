@@ -35,6 +35,7 @@ const CACHE_MAX = 3000;
 // The bundles sit next to this script; derive their directory from the manifest.
 const ASSET_DIR = assetDir(chrome.runtime.getManifest());
 const OFFSCREEN_URL = ASSET_DIR + "offscreen/offscreen.html";
+const WORKER_URL = chrome.runtime.getURL(ASSET_DIR + HOST_WORKER);
 
 const USES_OFFSCREEN = typeof chrome.offscreen !== "undefined";
 
@@ -311,7 +312,7 @@ function createRemotePool(): Pool {
     ensure();
   };
   return {
-    spawn: () => command({ kind: "spawn" }),
+    spawn: () => command({ kind: "spawn", workerUrl: WORKER_URL }),
     classify: (id: string, title: string) => command({ kind: "classify", id, title }),
     cancel: (id: string) => command({ kind: "cancel", id }),
   };
@@ -320,7 +321,7 @@ function createRemotePool(): Pool {
 const pool: Pool = USES_OFFSCREEN
   ? createRemotePool()
   : createWorkerPool({
-      workerUrl: chrome.runtime.getURL(ASSET_DIR + HOST_WORKER),
+      workerUrl: WORKER_URL,
       maxWorkers: MAX_WORKERS,
       onEvent: onPoolEvent,
     });
