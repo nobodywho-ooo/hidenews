@@ -22,7 +22,8 @@ src/
   popup/               settings + model status
   shared/config.ts     model, prompt, threshold, cache versioning
   shared/assets.ts     derives the bundle directory from the manifest
-tests/                 static bundle checks + headless-Firefox test
+  shared/messaging.ts  safe cross-browser runtime messaging
+tests/                 static bundle checks, pool unit tests, headless-Firefox test
 test-suite/            hand-labelled cases (persistent tuning suite)
 test-data/             HN snapshots + model predictions
 tune/                  tuning scripts (init-suite, analyze, sweep, report)
@@ -45,7 +46,7 @@ wasm already built (`nobodywho/js/dist/nobodywho_minimal.wasm`, ~366 MB;
 npm install
 npm run build        # → firefox/dist and chrome/dist   (npm run watch to rebuild)
 npm run typecheck
-npm test             # static checks on both builds
+npm test             # static checks on both builds + worker-pool unit tests
 npm run test:browser # end-to-end in headless Firefox (geckodriver + Firefox.app)
 ```
 
