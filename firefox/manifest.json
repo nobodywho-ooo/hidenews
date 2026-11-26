@@ -35,7 +35,7 @@
   },
   "browser_specific_settings": {
     "gecko": {
-      "id": "ai.nobodywho.hidenews"
+      "id": "hidenews@nobodywho.ai"
     }
   }
 }
