@@ -55,7 +55,6 @@ function assets(target) {
 
   cpSync(join(root, "src/popup/popup.html"), join(outbase, "popup/popup.html"));
   cpSync(join(root, "src/popup/popup.css"), join(outbase, "popup/popup.css"));
-  cpSync(join(root, target.name, "manifest.json"), join(outbase, "manifest.json"));
   // the nobodywho wasm binary, next to the host-worker bundle (the emscripten
   // glue finds it relative to its own URL)
   cpSync(NW_WASM, join(outbase, "nobodywho_minimal.wasm"));
@@ -98,8 +97,9 @@ function verify(target, outbase) {
   const wasm = statSync(join(outbase, "nobodywho_minimal.wasm")).size;
   if (wasm < MIN_WASM) throw new Error(`build guard: wasm is only ${wasm} bytes`);
 
-  // every path the manifest points at must exist in the output
-  const manifest = JSON.parse(readFileSync(join(outbase, "manifest.json"), "utf8"));
+  // every path the manifest points at must exist in the extension root
+  const extRoot = join(root, target.name);
+  const manifest = JSON.parse(readFileSync(join(extRoot, "manifest.json"), "utf8"));
   const refs = [
     ...(manifest.background?.scripts ?? []),
     manifest.background?.service_worker,
@@ -107,7 +107,7 @@ function verify(target, outbase) {
     manifest.action?.default_popup,
   ].filter(Boolean);
   for (const ref of refs) {
-    if (!existsSync(join(outbase, ref))) throw new Error(`build guard: manifest references missing ${ref}`);
+    if (!existsSync(join(extRoot, ref))) throw new Error(`build guard: manifest references missing ${ref}`);
   }
   console.log(`guard: ${target.name} ok (wasm ${(wasm / 1048576).toFixed(0)} MB)`);
 }

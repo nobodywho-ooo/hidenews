@@ -9,9 +9,9 @@ model running fully on-device via nobodywho
 
 ```
 firefox/manifest.json  Firefox manifest (event-page background)
-firefox/dist/          build output — this is what you load in Firefox
+firefox/dist/          generated bundles next to it
 chrome/manifest.json   Chrome manifest (service worker + offscreen)
-chrome/dist/           build output — this is what you load in Chrome
+chrome/dist/           generated bundles next to it
 build.mjs              esbuild → <browser>/dist/
 src/
   background.ts        queue, verdict cache, page ports
@@ -21,14 +21,17 @@ src/
   content.ts           HN page: declares stories, styles rows
   popup/               settings + model status
   shared/config.ts     model, prompt, threshold, cache versioning
+  shared/assets.ts     derives the bundle directory from the manifest
 tests/                 static bundle checks + headless-Firefox test
 test-suite/            hand-labelled cases (persistent tuning suite)
 test-data/             HN snapshots + model predictions
 tune/                  tuning scripts (init-suite, analyze, sweep, report)
 ```
 
-The two browsers need different manifests: Firefox's MV3 background is an event
-page (`background.scripts`), while Chrome's is a service worker
+The extension root is the browser folder: its hand-written `manifest.json` sits
+beside the generated `dist/`, and its paths are `dist/...`. The two browsers need
+different manifests: Firefox's MV3 background is an event page
+(`background.scripts`), while Chrome's is a service worker
 (`background.service_worker`). The bundles are otherwise identical, except that
 Chrome also ships the offscreen page (see below).
 
@@ -49,11 +52,11 @@ npm run test:browser # end-to-end in headless Firefox (geckodriver + Firefox.app
 ## Load it
 
 **Firefox**: `about:debugging#/runtime/this-firefox` → *Load Temporary Add-on* →
-`firefox/dist/manifest.json`. After a rebuild, *Remove* and re-load rather than
+`firefox/manifest.json`. After a rebuild, *Remove* and re-load rather than
 *Reload*, so the ~366 MB wasm isn't served stale.
 
 **Chrome/Edge**: `chrome://extensions` → *Developer mode* → *Load unpacked* →
-the `chrome/dist/` directory.
+the `chrome/` directory (the one containing `manifest.json`).
 
 The first run downloads the model (~450 MB,
 `hf://ggml-org/Laya-GGUF/Laya-Q8_0.gguf`) into IndexedDB.

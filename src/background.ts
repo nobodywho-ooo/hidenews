@@ -22,6 +22,7 @@ import {
   MAX_WORKERS,
 } from "./shared/config";
 import { createWorkerPool, type Pool, type PoolEvent } from "./pool";
+import { assetDir } from "./shared/assets";
 
 declare const chrome: any;
 type Port = any;
@@ -30,7 +31,10 @@ const PORT_NAME = "hn";
 const ITEM_TTL_MS = 5000;
 const MAX_RETRIES = 2;
 const CACHE_MAX = 3000;
-const OFFSCREEN_URL = "offscreen/offscreen.html";
+
+// The bundles sit next to this script; derive their directory from the manifest.
+const ASSET_DIR = assetDir(chrome.runtime.getManifest());
+const OFFSCREEN_URL = ASSET_DIR + "offscreen/offscreen.html";
 
 const USES_OFFSCREEN = typeof chrome.offscreen !== "undefined";
 
@@ -316,7 +320,7 @@ function createRemotePool(): Pool {
 const pool: Pool = USES_OFFSCREEN
   ? createRemotePool()
   : createWorkerPool({
-      workerUrl: chrome.runtime.getURL(HOST_WORKER),
+      workerUrl: chrome.runtime.getURL(ASSET_DIR + HOST_WORKER),
       maxWorkers: MAX_WORKERS,
       onEvent: onPoolEvent,
     });

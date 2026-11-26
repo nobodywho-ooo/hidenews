@@ -7,11 +7,12 @@
 //   here -> background: {kind:"pool-event", event}   (see src/pool.ts)
 import { HOST_WORKER, MAX_WORKERS } from "./shared/config";
 import { createWorkerPool } from "./pool";
+import { assetDir } from "./shared/assets";
 
 declare const chrome: any;
 
 const pool = createWorkerPool({
-  workerUrl: chrome.runtime.getURL(HOST_WORKER),
+  workerUrl: chrome.runtime.getURL(assetDir(chrome.runtime.getManifest()) + HOST_WORKER),
   maxWorkers: MAX_WORKERS,
   onEvent: (event) => {
     chrome.runtime.sendMessage({ kind: "pool-event", event }).catch(() => {});

@@ -32,10 +32,10 @@ function buildTestExtension() {
   rmSync(EX_DIR, { recursive: true, force: true });
   mkdirSync(EX_DIR, { recursive: true });
   // Real copy — Firefox's temporary add-on loader won't follow a symlinked dist.
-  cpSync(join(root, "firefox/dist"), EX_DIR, { recursive: true });
+  cpSync(join(root, "firefox/dist"), join(EX_DIR, "dist"), { recursive: true });
   const m = JSON.parse(readFileSync(join(root, "firefox/manifest.json"), "utf8"));
   m.content_scripts = [
-    { matches: ["*://news.ycombinator.com/*", `http://127.0.0.1:${FIXTURE_PORT}/*`], js: ["content.js"], run_at: "document_idle" },
+    { matches: ["*://news.ycombinator.com/*", `http://127.0.0.1:${FIXTURE_PORT}/*`], js: ["dist/content.js"], run_at: "document_idle" },
   ];
   writeFileSync(join(EX_DIR, "manifest.json"), JSON.stringify(m, null, 2));
   return EX_DIR;

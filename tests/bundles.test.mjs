@@ -13,23 +13,23 @@ const manifest = (browser) => JSON.parse(readFileSync(join(root, browser, "manif
 test("firefox manifest: event page, gecko id, no service worker", () => {
   const m = manifest("firefox");
   assert.equal(m.manifest_version, 3);
-  assert.deepEqual(m.background.scripts, ["background.js"]);
+  assert.deepEqual(m.background.scripts, ["dist/background.js"]);
   assert.equal(m.background.service_worker, undefined);
   assert.equal(m.browser_specific_settings.gecko.id, "hidenews@example.com");
   assert.ok(m.content_security_policy.extension_pages.includes("wasm-unsafe-eval"));
-  assert.equal(m.action.default_popup, "popup/popup.html");
+  assert.equal(m.action.default_popup, "dist/popup/popup.html");
   assert.ok(m.content_scripts[0].matches.includes("*://news.ycombinator.com/*"));
 });
 
 test("chrome manifest: service worker, offscreen permission, no gecko id", () => {
   const m = manifest("chrome");
   assert.equal(m.manifest_version, 3);
-  assert.equal(m.background.service_worker, "background.js");
+  assert.equal(m.background.service_worker, "dist/background.js");
   assert.equal(m.background.scripts, undefined);
   assert.ok(m.permissions.includes("offscreen"));
   assert.equal(m.browser_specific_settings, undefined);
   assert.ok(m.content_security_policy.extension_pages.includes("wasm-unsafe-eval"));
-  assert.equal(m.action.default_popup, "popup/popup.html");
+  assert.equal(m.action.default_popup, "dist/popup/popup.html");
 });
 
 test("the two manifests only differ where they must", () => {
