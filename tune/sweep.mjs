@@ -11,6 +11,8 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { basename } from "node:path";
 import { Decision } from "/Users/madsmtm/Desktop/work/nobodywho/nobodywho/js/dist/index.mjs";
 import {
+  AI_CHOICE_KEY,
+  HIDE_AI_PROMPT_CHOICE2,
   HIDE_AI_PROMPT_DEFLATED,
   HIDE_AI_PROMPT_DEFLATED_NEG2,
   HIDE_AI_PROMPT_DEFLATED_NVIDIA,
@@ -20,11 +22,16 @@ import { loadSuite, parseStories, suitePathFor } from "./suite.mjs";
 
 const MODEL = "/Users/madsmtm/Desktop/work/models/Laya-Q8_0.gguf";
 const PROMOTS = {
+  choice2: HIDE_AI_PROMPT_CHOICE2,
   simple: HIDE_AI_PROMPT_SIMPLE,
   deflated: HIDE_AI_PROMPT_DEFLATED,
   deflated_nvidia: HIDE_AI_PROMPT_DEFLATED_NVIDIA,
   deflated_neg2: HIDE_AI_PROMPT_DEFLATED_NEG2,
 };
+
+/** P("about AI") for either question type (noul boolean or choice). */
+const answerP = (res) =>
+  res.answers.is_ai?.noul ?? res.answers.is_ai?.probabilities?.[AI_CHOICE_KEY] ?? 0;
 
 const daysArg = process.argv
   .filter((a) => a.startsWith("--days="))[0]
@@ -40,7 +47,7 @@ const thresholds = thresholdsArg
 // 1. Load model once; classify each story under each prompt (cached).
 const decision = await Decision.fromPath({ modelPath: MODEL });
 
-/** probabilities[day][url][promptName] = noul probability */
+/** probabilities[day][url][promptName] = P("about AI") */
 const probabilities = {};
 for (const day of days) {
   const snapshot = `test-data/front-page-${day}.html`;
@@ -51,7 +58,7 @@ for (const day of days) {
     probabilities[day][s.url] = {};
     for (const [pname, prompt] of Object.entries(PROMOTS)) {
       const res = await decision.decide({ state, questions: prompt });
-      probabilities[day][s.url][pname] = res.answers.is_ai.noul;
+      probabilities[day][s.url][pname] = answerP(res);
     }
     process.stdout.write(`\r${day}  [${Object.keys(probabilities[day]).length}/${stories.length}]`);
   }

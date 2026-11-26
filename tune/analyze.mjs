@@ -1,7 +1,7 @@
 // Front-page analyzer + tuning loop.
 //
 // Usage:
-//   node tune/analyze.mjs <snapshot.html> [--threshold 0.5] [--prompt=simple|verbose] [--update-suite]
+//   node tune/analyze.mjs <snapshot.html> [--threshold 0.43] [--prompt=current|simple|verbose] [--update-suite]
 //
 // - Parses an HN front-page snapshot, classifies every story with Laya.
 // - Loads the golden labels from the day's file test-suite/cases/<day>.json
@@ -15,14 +15,24 @@ import { readFileSync, writeFileSync } from "node:fs";
 import { basename, join } from "node:path";
 import { Decision } from "/Users/madsmtm/Desktop/work/nobodywho/nobodywho/js/dist/index.mjs";
 import {
+  AI_CHOICE_KEY,
   DEFAULT_THRESHOLD,
+  HIDE_AI_PROMPT,
   HIDE_AI_PROMPT_SIMPLE,
   HIDE_AI_PROMPT_VERBOSE,
 } from "./prompt.mjs";
 import { loadSuite, parseStories, suitePathFor, updateSuite } from "./suite.mjs";
 
 const MODEL = "/Users/madsmtm/Desktop/work/models/Laya-Q8_0.gguf";
-const PROMPTS = { simple: HIDE_AI_PROMPT_SIMPLE, verbose: HIDE_AI_PROMPT_VERBOSE };
+const PROMPTS = {
+  current: HIDE_AI_PROMPT,
+  simple: HIDE_AI_PROMPT_SIMPLE,
+  verbose: HIDE_AI_PROMPT_VERBOSE,
+};
+
+/** P("about AI") for either question type (noul boolean or choice). */
+const answerP = (res) =>
+  res.answers.is_ai?.noul ?? res.answers.is_ai?.probabilities?.[AI_CHOICE_KEY] ?? 0;
 
 // --- classification ---
 
@@ -31,7 +41,7 @@ async function classify(decision, story) {
     ? `${story.title} (${story.domain})`
     : story.title;
   const res = await decision.decide({ state, questions: prompt });
-  return res.answers.is_ai.noul;
+  return answerP(res);
 }
 
 const snapshotPath = process.argv.slice(2).find((a) => !a.startsWith("--"));
@@ -43,7 +53,10 @@ const thresholdArg = Number(
   process.argv.filter((a) => a.startsWith("--threshold="))[0]?.split("=")[1],
 );
 const threshold = Number.isFinite(thresholdArg) ? thresholdArg : DEFAULT_THRESHOLD;
-const promptName = process.argv.includes("--prompt=verbose") ? "verbose" : "simple";
+const promptArg = process.argv
+  .filter((a) => a.startsWith("--prompt="))[0]
+  ?.split("=")[1];
+const promptName = promptArg && PROMPTS[promptArg] ? promptArg : "current";
 const prompt = PROMPTS[promptName];
 
 const html = readFileSync(snapshotPath, "utf8");

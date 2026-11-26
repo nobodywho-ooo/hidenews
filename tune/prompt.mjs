@@ -120,7 +120,24 @@ export const HIDE_AI_PROMPT_DEFLATED_NEG2 = {
   },
 };
 
-// Best result: a 3-option *choice* with an explicit AI-adjacent bucket.
+// Winner: a 2-option *choice*. The negative description does the heavy lifting:
+// it explicitly names the non-AI tech/science domains that a bare "not AI"
+// description leaves ambiguous. Best F1 on the labelled suite (0.649, 12/23 AI
+// caught with 2/67 hidden) matches the 3-option prompt without its extra state.
+export const HIDE_AI_PROMPT_CHOICE2 = {
+  is_ai: {
+    type: "choice",
+    instructions: "Classify this story's subject.",
+    criteria: {
+      ai: "AI/LLM technology or AI companies",
+      not_ai:
+        "generic software, security, privacy, consumer hardware, science, math, games, business, politics, or finance",
+    },
+  },
+};
+
+// Rejected: a 3-option *choice* with an explicit AI-adjacent bucket. It also
+// reached F1 0.649, but only by adding a state the extension never uses.
 export const HIDE_AI_PROMPT_CHOICE3 = {
   is_ai: {
     type: "choice",
@@ -138,13 +155,13 @@ export const HIDE_AI_PROMPT_CHOICE3 = {
  * For the `choice` above, treat the story as “about AI” when the probability
  * of the `ai` option is ≥ DOC_THRESHOLD.
  */
-export const HIDE_AI_PROMPT = HIDE_AI_PROMPT_CHOICE3;
+export const HIDE_AI_PROMPT = HIDE_AI_PROMPT_CHOICE2;
 
 export const AI_CHOICE_KEY = "ai";
 
-export const DOC_THRESHOLD = 0.5;
+export const DOC_THRESHOLD = 0.43;
 
 /** Default probability at/above which a story is treated as "about AI".
- * 0.50 is the round default; the labelled suite's Pareto-best was 0.51, which is
- * within sampling noise. */
-export const DEFAULT_THRESHOLD = 0.5;
+ * Two options use Laya's warmer `choice.2` temperature, so the tuned cutoff is
+ * lower than the 3-option 0.50: 0.43 catches 12/23 AI with 2/67 non-AI hidden. */
+export const DEFAULT_THRESHOLD = 0.43;

@@ -3,15 +3,18 @@
 
 export const MODEL_PATH = "hf://ggml-org/Laya-GGUF/Laya-Q8_0.gguf";
 
-// 3-option *choice* with an explicit AI-adjacent bucket (best result, 86/86/52).
+// 2-option *choice* (ai / not_ai). Tuned on the labelled suite; matches the
+// old 3-option prompt's best F1 without its extra "AI-adjacent" state (see
+// tune/prompt.mjs, HIDE_AI_PROMPT_CHOICE2). The second option's negative list
+// is what keeps generic software/hardware/science stories out.
 export const PROMPT = {
   is_ai: {
     type: "choice" as const,
     instructions: "Classify this story's subject.",
     criteria: {
-      ai: "AI/LLM technology",
-      ai_adj: "AI-adjacent (Nvidia, AI hardware, agent tooling)",
-      not_ai: "not AI at all",
+      ai: "AI/LLM technology or AI companies",
+      not_ai:
+        "generic software, security, privacy, consumer hardware, science, math, games, business, politics, or finance",
     },
   },
 };
@@ -19,11 +22,11 @@ export const PROMPT = {
 export const AI_CHOICE_KEY = "ai";
 
 // Chosen by sweeping the labelled suite (test-suite/cases) with the title-only
-// input the extension actually sends. 0.50 hides 4/67 non-AI stories while
-// catching 12/23 AI ones. The Pareto-best was 0.51 (2/67 hidden), but that is
-// within sampling noise, so the rounder 0.50 is the default. 0.45 was rejected:
-// it hides 8/67 humans for one extra AI story (see tune/sweep.mjs output).
-export const DEFAULT_THRESHOLD = 0.5;
+// input the extension actually sends. Laya uses a warmer fitted temperature for
+// two options than for three, so the cutoff sits lower than before: 0.43 catches
+// 12/23 AI stories while hiding 2/67 non-AI ones. 0.50 is a more conservative
+// alternative (9/23 caught, 1/67 hidden); 0.40 hides 3/67 for the same 12/23.
+export const DEFAULT_THRESHOLD = 0.43;
 
 // The inference worker bundle, at the root of the built extension.
 export const HOST_WORKER = "host-worker.js";
