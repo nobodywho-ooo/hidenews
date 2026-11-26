@@ -15,7 +15,7 @@ test("firefox manifest: event page, gecko id, no service worker", () => {
   assert.equal(m.manifest_version, 3);
   assert.deepEqual(m.background.scripts, ["dist/background.js"]);
   assert.equal(m.background.service_worker, undefined);
-  assert.equal(m.browser_specific_settings.gecko.id, "hidenews@example.com");
+  assert.equal(m.browser_specific_settings.gecko.id, "ai.nobodywho.hidenews");
   assert.ok(m.content_security_policy.extension_pages.includes("wasm-unsafe-eval"));
   assert.equal(m.action.default_popup, "dist/popup/popup.html");
   assert.ok(m.content_scripts[0].matches.includes("*://news.ycombinator.com/*"));
