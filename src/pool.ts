@@ -20,8 +20,10 @@ export type PoolEvent =
   | { kind: "cancelled"; id: string };
 
 export interface Pool {
-  /** Start (or warm) the pool: spawns the first worker if there is none. */
+  /** Ensure the pool is running. Idempotent: safe to call on every wake. */
   spawn(): void;
+  /** Add one worker if the pool is below its cap. */
+  grow(): void;
   /** Queue one classification. Terminal event follows. */
   classify(id: string, title: string): void;
   /** Drop a queued classification that has not started yet. */
@@ -44,18 +46,16 @@ export function createWorkerPool(opts: {
 
   const emitCapacity = () => onEvent({ kind: "capacity", ready: ready.size, total: workers.length });
 
-  function spawn() {
-    if (failed || workers.length >= maxWorkers) {
-      emitCapacity();
-      return;
-    }
+  /** Create one worker. Returns false when the pool is full or broken. */
+  function addWorker(): boolean {
+    if (failed || workers.length >= maxWorkers) return false;
     let w: Worker;
     try {
       w = new Worker(workerUrl, { type: "module" });
     } catch (e: any) {
       failed = true;
       onEvent({ kind: "model-status", status: "error", message: String(e?.message ?? e) });
-      return;
+      return false;
     }
     workers.push(w);
     w.onmessage = (e: MessageEvent) => handle(w, e.data);
@@ -74,6 +74,14 @@ export function createWorkerPool(opts: {
       dispatch();
     };
     emitCapacity();
+    return true;
+  }
+
+  /** Ensure the pool is running. Idempotent: calling it on an already warm pool
+   * only re-reports capacity (the background calls it on every wake). */
+  function spawn() {
+    if (workers.length === 0) addWorker();
+    else emitCapacity();
   }
 
   function dispatch() {
@@ -85,7 +93,7 @@ export function createWorkerPool(opts: {
       w.postMessage({ kind: "classify", id: task.id, title: task.title });
     }
     // Grow the pool only when there is more work than workers to do it.
-    if (pending.length > workers.length && workers.length < maxWorkers) spawn();
+    if (pending.length > workers.length) addWorker();
   }
 
   function handle(w: Worker, msg: any) {
@@ -121,6 +129,9 @@ export function createWorkerPool(opts: {
 
   return {
     spawn,
+    grow: () => {
+      addWorker();
+    },
     classify(id, title) {
       if (failed) {
         onEvent({ kind: "classify-error", id, error: "model unavailable" });

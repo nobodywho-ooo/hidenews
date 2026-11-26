@@ -179,8 +179,8 @@ function pump() {
       inFlight.add(id);
       pool.classify(id, item.title);
     }
-    // Backlog and every worker busy: grow the pool (one worker per call).
-    if (queue.length > 0 && poolReady === poolTotal && poolTotal < MAX_WORKERS) pool.spawn();
+    // Backlog and every worker busy: ask the pool for one more worker.
+    if (queue.length > 0 && poolReady === poolTotal && poolTotal < MAX_WORKERS) pool.grow();
   } finally {
     pumping = false;
   }
@@ -211,7 +211,15 @@ function onPoolEvent(ev: PoolEvent) {
     case "capacity":
       poolReady = ev.ready;
       poolTotal = ev.total;
-      if (poolReady > 0) modelReady = true;
+      if (poolReady > 0 && !modelReady) {
+        // A warm pool means the model is loaded. This also covers the Chrome
+        // case where the service worker restarted while the offscreen pool
+        // (and its loaded model) survived: status starts at "idle" again.
+        modelReady = true;
+        modelError = null;
+        status = { status: "ready" };
+        broadcastStatus();
+      }
       pump();
       break;
     case "model-status":
@@ -313,6 +321,7 @@ function createRemotePool(): Pool {
   };
   return {
     spawn: () => command({ kind: "spawn", workerUrl: WORKER_URL }),
+    grow: () => command({ kind: "grow" }),
     classify: (id: string, title: string) => command({ kind: "classify", id, title }),
     cancel: (id: string) => command({ kind: "cancel", id }),
   };

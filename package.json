@@ -6,7 +6,7 @@
     "build": "node build.mjs",
     "watch": "node build.mjs --watch",
     "typecheck": "tsc --noEmit",
-    "test": "node --test tests/bundles.test.mjs",
+    "test": "node --test tests/bundles.test.mjs tests/pool.test.mjs",
     "test:browser": "node --test --test-concurrency=1 tests/browser.test.mjs"
   },
   "devDependencies": {
