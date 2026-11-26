@@ -21,7 +21,7 @@ function formatMB(n: number) {
 }
 
 function setModelStatus(s: any) {
-  modelUrlEl.textContent = s?.modelUrl ? `Source: ${s.modelUrl}` : "";
+  modelUrlEl.textContent = s?.modelUrl ?? "";
   if (s.status === "ready") {
     statusEl.textContent = "Model ready, filtering live.";
     statusEl.className = "status ok";
