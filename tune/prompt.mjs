@@ -122,12 +122,13 @@ export const HIDE_AI_PROMPT_DEFLATED_NEG2 = {
 
 // Winner: a 2-option *choice*. The negative description does the heavy lifting:
 // it explicitly names the non-AI tech/science domains that a bare "not AI"
-// description leaves ambiguous. Best F1 on the labelled suite (0.649, 12/23 AI
-// caught with 2/67 hidden) matches the 3-option prompt without its extra state.
+// description leaves ambiguous. Phrasing the instructions as a question
+// ("Is this story about AI or LLMs?") beat "Classify this story's subject."
+// on the 14-day suite: best F1 0.633 vs 0.617.
 export const HIDE_AI_PROMPT_CHOICE2 = {
   is_ai: {
     type: "choice",
-    instructions: "Classify this story's subject.",
+    instructions: "Is this story about AI or LLMs?",
     criteria: {
       ai: "AI/LLM technology or AI companies",
       not_ai:
@@ -159,9 +160,10 @@ export const HIDE_AI_PROMPT = HIDE_AI_PROMPT_CHOICE2;
 
 export const AI_CHOICE_KEY = "ai";
 
-export const DOC_THRESHOLD = 0.43;
+export const DOC_THRESHOLD = 0.5;
 
 /** Default probability at/above which a story is treated as "about AI".
- * Two options use Laya's warmer `choice.2` temperature, so the tuned cutoff is
- * lower than the 3-option 0.50: 0.43 catches 12/23 AI with 2/67 non-AI hidden. */
-export const DEFAULT_THRESHOLD = 0.43;
+ * On the 14-day suite 0.50 hides 39/131 AI stories for 3/289 non-AI ones
+ * (93% precision, ~0.2 false positives per page). 0.45 is the looser option
+ * (44 AI, 7 non-AI); 0.40 hides 51 AI for 9 non-AI. */
+export const DEFAULT_THRESHOLD = 0.5;

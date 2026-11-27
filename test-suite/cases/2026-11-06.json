@@ -1,0 +1,152 @@
+[
+  {
+    "url": "https://www.reuters.com/world/us/us-faa-says-it-will-phase-out-floppy-disks-air-traffic-control-by-2028-2026-11-05/",
+    "title": "US FAA says it will phase out floppy disks from air traffic control by 2028",
+    "expected": "not-ai"
+  },
+  {
+    "url": "https://www.nbcnews.com/tech/tech-news/tesla-wind-cybertruck-production-years-poor-sales-markets-rcna607817",
+    "title": "Tesla to wind down Cybertruck production",
+    "expected": "not-ai"
+  },
+  {
+    "url": "https://hightouch.com/blog/llm-judges-identity-resolution",
+    "title": "A Jev that can ask Opus for help gives Opus accuracy at 4x lower cost",
+    "expected": "ai"
+  },
+  {
+    "url": "https://blog.google/innovation-and-ai/technology/developers-tools/introducing-gemini-omni-1-2-flash/",
+    "title": "Gemini Omni 1.2 Flash",
+    "expected": "ai"
+  },
+  {
+    "url": "https://github.com/ppmpreetham/BUI",
+    "title": "Blender's UI and Runtime: Much Faster Than GPUI",
+    "expected": "not-ai"
+  },
+  {
+    "url": "https://pwn.ai/blog/firecracker-escape",
+    "title": "Firecracker VM Escape: PwnEscape Part 2",
+    "expected": "not-ai"
+  },
+  {
+    "url": "https://kevinboone.me/efitest_index.html",
+    "title": "First steps in bare-metal programming using UEFI",
+    "expected": "not-ai"
+  },
+  {
+    "url": "https://www.reuters.com/business/world-at-work/britain-make-salary-disclosure-job-ads-mandatory-2026-11-05/",
+    "title": "Britain to make salary disclosure in job ads mandatory",
+    "expected": "not-ai"
+  },
+  {
+    "url": "https://github.com/PrivSec-dev/banking-apps-compat-report/issues/105",
+    "title": "Dutch 'idealist' bank ASN blocks non-Google Android, including GrapheneOS",
+    "expected": "not-ai"
+  },
+  {
+    "url": "https://finance.yahoo.com/technology/ai/articles/mark-cuban-says-facebook-knowingly-213000020.html",
+    "title": "Cuban: Facebook knowingly runs AI deepfake scam ads; docs say $16B fraud revenue",
+    "expected": "ai"
+  },
+  {
+    "url": "https://www.planned-obsolescence.org/p/ai-is-dramatically-accelerating-ai",
+    "title": "AI is dramatically accelerating AI research",
+    "expected": "ai"
+  },
+  {
+    "url": "https://devvm.dev/",
+    "title": "Devvm.dev: One VM for every project",
+    "expected": "not-ai"
+  },
+  {
+    "url": "https://www.infohawk.com/news/2026-11-05-scamwich-restaurant-skimming",
+    "title": "Restaurant Delivery Payment-Skimming Campaign",
+    "expected": "not-ai"
+  },
+  {
+    "url": "https://thereader.mitpress.mit.edu/from-linux-to-wikipedia-how-volunteers-build-the-internet/",
+    "title": "From Linux to Wikipedia: How Volunteers Build the Internet",
+    "expected": "not-ai"
+  },
+  {
+    "url": "https://www.norvig.com/chomsky.html",
+    "title": "Chomsky and the two cultures of statistical learning (2011)",
+    "expected": "ai"
+  },
+  {
+    "url": "https://thinkingmachines.ai/news/inkling-2-small/",
+    "title": "Inkling 2 Small",
+    "expected": "ai"
+  },
+  {
+    "url": "https://pwn.college/",
+    "title": "Pwn.college",
+    "expected": "not-ai"
+  },
+  {
+    "url": "https://www.crusoe.ai/resources/newsroom/crusoe-wyoming-data-center-campus-update",
+    "title": "Google has acquired Crusoe's data center site in southeast Wyoming",
+    "expected": "ai"
+  },
+  {
+    "url": "https://firenook.dev/",
+    "title": "Show HN: Firenook – Firebase emulators in Rust: 40× faster writes, 10× less RAM",
+    "expected": "not-ai"
+  },
+  {
+    "url": "https://www.filfre.net/2026/11/deus-ex/",
+    "title": "Deus Ex",
+    "expected": "not-ai"
+  },
+  {
+    "url": "https://apps.metaebene.me/en/kugelblitz",
+    "title": "Kugelblitz – Mac-Native Google Earth Alternative",
+    "expected": "not-ai"
+  },
+  {
+    "url": "https://github.com/dsx-ai-factory/nvke",
+    "title": "Nvidia Kubernetes Engine (NVKE)",
+    "expected": "ai"
+  },
+  {
+    "url": "https://scotthelme.co.uk/we-know-15-579-websites-are-infected-how-do-we-tell-them/",
+    "title": "We know 15k websites are infected. how do we tell them?",
+    "expected": "not-ai"
+  },
+  {
+    "url": "https://github.com/piercefreeman/waymark",
+    "title": "Show HN: Waymark – A workflow engine that compiles jobs instead of replaying",
+    "expected": "not-ai"
+  },
+  {
+    "url": "https://www.bloomberg.com/news/articles/2026-11-06/anthropic-ipo-valuation-expectations-pressured-after-ai-rout",
+    "title": "Anthropic IPO buyers see valuation as low as $1.1T",
+    "expected": "ai"
+  },
+  {
+    "url": "https://www.pv-magazine.com/2026/11/06/sodium-ion-batteries-approach-cost-parity-with-lfp-with-70-gwh-covered-by-supply-agreements/",
+    "title": "Sodium-ion batteries approach cost parity with LFP",
+    "expected": "not-ai"
+  },
+  {
+    "url": "https://worldstrike.fun/",
+    "title": "Multiplayer tanks that demolish real buildings from OpenStreetMap",
+    "expected": "not-ai"
+  },
+  {
+    "url": "https://jhr.pensoft.net/articles.php?id=9096",
+    "title": "Living beyond the limits of survival: wood ants trapped in a gigantic pitfall (2016)",
+    "expected": "not-ai"
+  },
+  {
+    "url": "https://github.com/matthewmrichter/mooftcp",
+    "title": "MoofTCP – A modern replacement for MacTCP on 68k Macs",
+    "expected": "not-ai"
+  },
+  {
+    "url": "https://arxiv.org/abs/2610.21375",
+    "title": "Memorilla: Latent Semantic Memory for LLMs",
+    "expected": "ai"
+  }
+]

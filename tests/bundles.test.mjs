@@ -67,7 +67,9 @@ for (const browser of ["firefox", "chrome"]) {
   test(`${browser}: wasm binary present and non-trivial`, () => {
     const p = join(dist(browser), "nobodywho_minimal.wasm");
     assert.ok(existsSync(p));
-    assert.ok(readFileSync(p).byteLength > 100 * 1024 * 1024);
+    // Keep in step with MIN_WASM in build.mjs: the wasm build size varies with
+    // the nobodywho feature set (a release build is ~11 MB, a debug one ~366 MB).
+    assert.ok(readFileSync(p).byteLength > 1 * 1024 * 1024);
   });
 }
 

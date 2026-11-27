@@ -10,10 +10,23 @@ One file per sampled day, so it stays tweakable and greppable long-term:
 
 ```
 test-suite/cases/
-  2026-10-24.json   # front page of 2026-10-24 (a month ago)
-  2026-11-17.json   # a week ago
-  2026-11-23.json   # yesterday
+  2026-09-25.json   # ... one file per sampled day
+  2026-10-15.json
+  2026-10-24.json
+  2026-10-30.json
+  2026-11-06.json
+  2026-11-12.json
+  2026-11-17.json
+  2026-11-18.json
+  2026-11-20.json
+  2026-11-22.json
+  2026-11-23.json
+  2026-11-24.json
+  2026-11-25.json
+  2026-11-26.json
 ```
+
+14 days, 420 labelled stories (131 AI / 289 not-AI).
 
 Each file is a JSON array of cases, **ordered the way the stories appeared on
 Hacker News** (rank 1 first). The only fields the decision model sees are
@@ -39,3 +52,14 @@ not model inputs and don't appear in the entries.
   adds new stories to the day's suite file first.
 - The winning prompt/threshold is copied into `src/shared/config.ts`; the
   unjudged `null` cases are how the suite stays honest.
+
+## Labelling rules
+
+- `ai` when the story is about AI/LLMs, a model or agent, an AI company's AI
+  business (OpenAI, Anthropic, Nvidia, ...), AI compute, or AI-assisted results
+  (e.g. the OpenAI/Anthropic proof stories).
+- `not-ai` for everything else, including plain mathematics announcements that
+  do not mention AI (e.g. "Masullo on the Riemann Hypothesis").
+- When a title is ambiguous, open the linked article and judge the story, not
+  just the title. A handful of 2026-11-20/11-25 titles were resolved this way
+  (Scott Aaronson's "stochastic parrots" post, the openai/math preprints).

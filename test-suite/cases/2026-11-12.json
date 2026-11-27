@@ -1,0 +1,152 @@
+[
+  {
+    "url": "https://apnews.com/article/nvidia-megaspeed-china-singapore-huang-5403f152a601cf82ce939f1d24fffa0f",
+    "title": "Jensen Huang resigns",
+    "expected": "ai"
+  },
+  {
+    "url": "https://ipo.anthropic.com/us/",
+    "title": "Anthropic IPO",
+    "expected": "ai"
+  },
+  {
+    "url": "https://www.wsj.com/business/nvidia-is-preparing-to-oust-nvidia-ceo-jensen-huang-30f421ad",
+    "title": "Nvidia is preparing to oust Jensen Huang",
+    "expected": "ai"
+  },
+  {
+    "url": "https://blog.rust-lang.org/2026/11/12/Rust-1.100.0/",
+    "title": "Rust 1.100",
+    "expected": "not-ai"
+  },
+  {
+    "url": "https://status.cloud.microsoft/",
+    "title": "Service degradation on Microsoft 365",
+    "expected": "not-ai"
+  },
+  {
+    "url": "https://github.com/simpsoka/zigzag",
+    "title": "Show HN: My $300 embroidery machine needed a subscription, so I built my own app",
+    "expected": "not-ai"
+  },
+  {
+    "url": "https://github.com/hyperionaidev/smolmaxxing/",
+    "title": "I'm making LLMs work on small and old devices",
+    "expected": "ai"
+  },
+  {
+    "url": "https://antigravity.google/blog/gemini-4-hydrogen-in-google-antigravity/",
+    "title": "Gemini 4 Hydrogen and Orchestrator",
+    "expected": "ai"
+  },
+  {
+    "url": "https://www.moddb.com/mods/openq4/downloads/openq4-0141-windows-x64",
+    "title": "Abandoned Quake 4 expansion finished by modders and now playable",
+    "expected": "not-ai"
+  },
+  {
+    "url": "https://www.mcmillen.dev/sigbovik/",
+    "title": "93% of paint splatters are valid Perl programs (2019)",
+    "expected": "not-ai"
+  },
+  {
+    "url": "https://www.smithsonianmag.com/smart-news/astronomers-found-a-mysterious-object-orbiting-far-beyond-pluto-it-could-be-a-new-dwarf-planet-hidden-in-our-solar-system-180989857/",
+    "title": "Dwarf planet candidate appears which takes roughly 280 years to orbit our sun",
+    "expected": "not-ai"
+  },
+  {
+    "url": "https://blog.google/innovation-and-ai/models-and-research/gemini-models/introducing-gemini-4-hydrogen/",
+    "title": "Gemini 4 Hydrogen",
+    "expected": "ai"
+  },
+  {
+    "url": "https://chipsandcheese.com/p/talking-zen-6-with-mike-clark-at",
+    "title": "Talking Zen 6 with Mike Clark at AMD In-Depth",
+    "expected": "not-ai"
+  },
+  {
+    "url": "https://github.com/janestreet/agent_skills/blob/master/socratic-tutor/SKILL.md",
+    "title": "Socratic Tutor",
+    "expected": "ai"
+  },
+  {
+    "url": "https://mehmetince.net/part-3-6-how-i-ended-up-turning-a-22-year-old-postgresql-type-confusion-primitive-into-rce-cve-2026-6460/",
+    "title": "Turning a 22-year-old Postgres type-confusion primitive into RCE",
+    "expected": "not-ai"
+  },
+  {
+    "url": "https://developer.apple.com/foundation-models-framework/",
+    "title": "Foundation Models framework",
+    "expected": "ai"
+  },
+  {
+    "url": "https://www.wiz.io/blog/cve-2026-119618-rce-apache-http-server-vulnerability",
+    "title": "Critical RCE Vulnerability in Apache HTTP Server",
+    "expected": "not-ai"
+  },
+  {
+    "url": "https://makepad.github.io/relax/",
+    "title": "Relax: JIT compiler for Rust to reduce build times",
+    "expected": "not-ai"
+  },
+  {
+    "url": "https://pron.github.io/posts/correctness-and-complexity",
+    "title": "Writing correct software is hard and math alone won’t help us (2016)",
+    "expected": "not-ai"
+  },
+  {
+    "url": "https://github.com/Parcha-ai/agentrun/blob/main/README.md",
+    "title": "Show HN: AgentRun – open-source, Self-improving Managed Agents",
+    "expected": "ai"
+  },
+  {
+    "url": "https://hugovk.dev/blog/2026/lock-github-actions/",
+    "title": "Lock Your GitHub Actions",
+    "expected": "not-ai"
+  },
+  {
+    "url": "https://codeberg.org/wvhulle/bootvine",
+    "title": "A live tree of systemd jobs on the boot console",
+    "expected": "not-ai"
+  },
+  {
+    "url": "https://blog.janestreet.com/software-engineering-interviews-are-changing-a-little/",
+    "title": "Our software engineering interviews are changing a little",
+    "expected": "not-ai"
+  },
+  {
+    "url": "item?id=50471281",
+    "title": "Show HN: Kapso – Iterative learning from enterprise data",
+    "expected": "ai"
+  },
+  {
+    "url": "https://tratt.net/laurie/blog/2026/adapting_cpython_for_yk.html",
+    "title": "Adapting CPython for Yk",
+    "expected": "not-ai"
+  },
+  {
+    "url": "https://synthanatomy.com/2026/11/ai-is-turning-apples-app-review-process-into-a-nightmare-for-developers.html",
+    "title": "AI is turning Apple's app review process into a nightmare for synth developers",
+    "expected": "ai"
+  },
+  {
+    "url": "https://www.ign.com/articles/nintendo-takes-down-switch-emulators-and-mod-chip-firmware-in-massive-github-dmca-sweep",
+    "title": "Nintendo Takes Down Emulators and Firmware in Massive GitHub DMCA Sweep",
+    "expected": "not-ai"
+  },
+  {
+    "url": "https://github.com/chocoford/ExcalidrawZ",
+    "title": "ExcalidrawZ: Local Native Excalidraw on macOS/iOS",
+    "expected": "not-ai"
+  },
+  {
+    "url": "https://libreagi.com/",
+    "title": "Libreagi – Save OSS Models",
+    "expected": "ai"
+  },
+  {
+    "url": "https://www.quantamagazine.org/did-life-begin-in-an-rna-world-20261109/",
+    "title": "Did Life Begin in an RNA World?",
+    "expected": "not-ai"
+  }
+]

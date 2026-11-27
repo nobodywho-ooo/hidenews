@@ -1,0 +1,152 @@
+[
+  {
+    "url": "https://scottaaronson.blog/?p=10379",
+    "title": "Holy shit holy shit holy shit holy shit: The magnitude of what’s now happening",
+    "expected": "ai"
+  },
+  {
+    "url": "item?id=50655664",
+    "title": "Tell HN: Happy Thanksgiving",
+    "expected": "not-ai"
+  },
+  {
+    "url": "https://commandcode.ai/moat",
+    "title": "Moat: OpenRouter replacement",
+    "expected": "ai"
+  },
+  {
+    "url": "https://github.com/intel/intel-one-mono",
+    "title": "Intel One Mono font (2023)",
+    "expected": "not-ai"
+  },
+  {
+    "url": "https://nextcloud.com/blog/euro-office-comes-to-your-desktop-with-the-nextcloud-office-desktop-app/",
+    "title": "Nextcloud Office Desktop app",
+    "expected": "not-ai"
+  },
+  {
+    "url": "https://aresluna.org/ui-style-guides/",
+    "title": "Collection of preserved UI style guides",
+    "expected": "not-ai"
+  },
+  {
+    "url": "https://janlukas.blog/posts/ai-self-hosting",
+    "title": "AI made self-hosting fun again",
+    "expected": "ai"
+  },
+  {
+    "url": "https://github.com/antonpictures/youtube-punisher",
+    "title": "YouTube Ad Punisher – Auto-reloads YouTube pages when an ad plays",
+    "expected": "not-ai"
+  },
+  {
+    "url": "https://techstackups.com/articles/google-workspace-ai-agents-mcp/",
+    "title": "Google Will Make AI Agents Use Its MCP Servers. The Gmail One Can't Send Email",
+    "expected": "ai"
+  },
+  {
+    "url": "https://progrium.github.io/minipg/",
+    "title": "Minipg: PostgreSQL as a Single Executable",
+    "expected": "not-ai"
+  },
+  {
+    "url": "https://devnull.land/amd-specific-llama-cpp",
+    "title": "AMD-specific fork of llama.cpp",
+    "expected": "ai"
+  },
+  {
+    "url": "item?id=50649864",
+    "title": "Tell HN: Lots of Ask HNs again",
+    "expected": "not-ai"
+  },
+  {
+    "url": "https://fosscomics.com/posts/17.%20Lions%27%20Commentary%20on%20Unix/",
+    "title": "Lions' Commentary on Unix: Why It Was Secretly Copied for 20 Years",
+    "expected": "not-ai"
+  },
+  {
+    "url": "https://twitter.com/thsottiaux/status/2125784147889393806",
+    "title": "OpenAI cuts GPT-6.2 usage: Astra hits limits 40% faster, Sol 25% faster",
+    "expected": "ai"
+  },
+  {
+    "url": "https://thereader.mitpress.mit.edu/curiosity-is-no-solo-act/",
+    "title": "Curiosity Is No Solo Act",
+    "expected": "not-ai"
+  },
+  {
+    "url": "https://krebsonsecurity.com/2026/11/cto-of-ransomwarehelp-indicted-for-wire-fraud/",
+    "title": "CTO of 'RansomwareHelp' indicted for wire fraud",
+    "expected": "not-ai"
+  },
+  {
+    "url": "https://github.com/alesha-pro/llm.asm/tree/main/02-baremetal-os",
+    "title": "Bare Metal Qwen",
+    "expected": "ai"
+  },
+  {
+    "url": "https://arxiv.org/abs/2611.34924",
+    "title": "An algebraic quantization of gravity from the null cone",
+    "expected": "not-ai"
+  },
+  {
+    "url": "https://asteriskmag.com/issues/16/marginal-grains",
+    "title": "The history of civilization is the history of wheat",
+    "expected": "not-ai"
+  },
+  {
+    "url": "https://nickvsnetworking.com/deploying-a-payphone-on-a-tiny-pacific-island-for-fun-and-zero-profit/",
+    "title": "Deploying a payphone on a tiny Pacific Island for fun and zero profit",
+    "expected": "not-ai"
+  },
+  {
+    "url": "https://www.friedgil.com/vpvnp",
+    "title": "What VP ≠ VNP Means (In 3 Minutes)",
+    "expected": "ai"
+  },
+  {
+    "url": "https://worksinprogress.co/issue/the-greatest-architect-youve-never-heard-of-is-in-pakistan/",
+    "title": "Kamil Khan Mumtaz: Pakistani architect, admired at home, almost invisible abroad",
+    "expected": "not-ai"
+  },
+  {
+    "url": "https://phys.org/news/2026-11-discovery-curse-ritual-trash-dump.html",
+    "title": "Discovery of curse ritual in trash dump surprises Egyptologist",
+    "expected": "not-ai"
+  },
+  {
+    "url": "https://michidk.github.io/sidebyside/",
+    "title": "Show HN: Three Linux VMs in a browser tab, each running a different browser",
+    "expected": "not-ai"
+  },
+  {
+    "url": "https://reclaimthenet.org/usaid-files",
+    "title": "The USAID Files",
+    "expected": "not-ai"
+  },
+  {
+    "url": "https://olumino.app",
+    "title": "Show HN: Olumino, a Markdown notes and spaced repetition app",
+    "expected": "not-ai"
+  },
+  {
+    "url": "https://github.com/eisenzopf/rvoip",
+    "title": "Rvoip: VoIP stack in Rust",
+    "expected": "not-ai"
+  },
+  {
+    "url": "https://www.science.org/content/blog-post/george-whitesides-1939-2026",
+    "title": "George Whitesides, 1939-2026",
+    "expected": "not-ai"
+  },
+  {
+    "url": "https://psychoscript.com/",
+    "title": "NormalScript: A perfectly normal scripting language",
+    "expected": "not-ai"
+  },
+  {
+    "url": "https://lia.mg/posts/measuring-company-culture-with-slack-emoji/",
+    "title": "Company Culture = Slack Emoji ÷ √Headcount",
+    "expected": "not-ai"
+  }
+]

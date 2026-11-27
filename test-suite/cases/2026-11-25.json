@@ -1,0 +1,152 @@
+[
+  {
+    "url": "https://1password.com/blog/update-on-nov-2026-security-incident",
+    "title": "1Password Security Incident",
+    "expected": "not-ai"
+  },
+  {
+    "url": "https://github.com/openai/math/blob/main/preprints/The-matrix-multiplication-exponent-is-nine-fourths-November-24-2026/paper.pdf",
+    "title": "The matrix multiplication exponent is nine fourths [pdf]",
+    "expected": "ai"
+  },
+  {
+    "url": "https://www.theverge.com/ai-artificial-intelligence/1041227/the-new-york-times-warns-photographers-not-to-update-photoshop-over-ai-features",
+    "title": "The New York Times warns photographers not to update Photoshop over AI features",
+    "expected": "ai"
+  },
+  {
+    "url": "https://buttons.joshwcomeau.com/",
+    "title": "Button Sounds – collection of professionally-recorded button clicks and presses",
+    "expected": "not-ai"
+  },
+  {
+    "url": "https://www.openwall.com/lists/oss-security/2026/11/25/9",
+    "title": "Slow Ubuntu security response times",
+    "expected": "not-ai"
+  },
+  {
+    "url": "https://github.com/lsernau/grh-lean",
+    "title": "Much shorter version of GRH Lean verification from Anthropic",
+    "expected": "ai"
+  },
+  {
+    "url": "https://bjin.github.io/go-codegolf-benchmark/#leaderboard",
+    "title": "GPT-6.2 Astra is the first model to beat Googlers' code golf records",
+    "expected": "ai"
+  },
+  {
+    "url": "https://www.lesswrong.com/posts/7wzWuLP3HhyBLmKfo/models-can-communicate-via-inference-servers-despite-being",
+    "title": "Models Can Communicate via Inference Servers Despite Being Sandboxed",
+    "expected": "ai"
+  },
+  {
+    "url": "https://github.com/google-research/google-research/tree/master/cogentic_research_papers",
+    "title": "Google releases Cogentic papers on integer factorization, discrete logs and more",
+    "expected": "ai"
+  },
+  {
+    "url": "https://www.vox.com/down-to-earth/511999/home-depot-retention-pond-snorkel-joseph-ricketts",
+    "title": "A few questions for the guy who went snorkeling in a Home Depot retention pond",
+    "expected": "not-ai"
+  },
+  {
+    "url": "https://github.com/xoxorwr/pw-loudness-eq",
+    "title": "Windows Loudness Equalization, reverse-engineered and ported to PipeWire",
+    "expected": "not-ai"
+  },
+  {
+    "url": "https://opensec.in/blog/nfs2root-cve-2026-99362",
+    "title": "Nfs2root: A 12-year-old pre-auth remote root in the Linux kernel's NFS server",
+    "expected": "not-ai"
+  },
+  {
+    "url": "https://rida.dev/blog/bypassing-ios-safari-60-fps-limit",
+    "title": "Bypassing iOS Safari's 60 FPS Limit to Build Web Applications That Feel Native",
+    "expected": "not-ai"
+  },
+  {
+    "url": "https://greydanus.github.io/2026/11/12/pengpt/",
+    "title": "PenGPT: A Generative Transformer for Handwriting and Sketches",
+    "expected": "ai"
+  },
+  {
+    "url": "https://zydra.sh/articles/ssh-is-a-gui-framework/",
+    "title": "SSH is a GUI framework",
+    "expected": "not-ai"
+  },
+  {
+    "url": "https://gpu-demo-gallery.pages.dev/",
+    "title": "Show HN: Old Nvidia and ATI tech demos, running again in the browser",
+    "expected": "not-ai"
+  },
+  {
+    "url": "https://github.com/openai/math/blob/main/preprints/Superpolynomial-graph-diameter-of-simple-polytopes-November-24-2026/paper.pdf",
+    "title": "The polynomial Hirsch conjecture is false [pdf]",
+    "expected": "ai"
+  },
+  {
+    "url": "https://s.conao3.com/blog/2026/e4f733",
+    "title": "I checked Clojure's core with Lean and found unreported bugs",
+    "expected": "not-ai"
+  },
+  {
+    "url": "https://basilhalperin.com/essays/macrohistory.html",
+    "title": "Macrohistory in Six Facts",
+    "expected": "not-ai"
+  },
+  {
+    "url": "https://www.iankduncan.com/engineering/2026-11-19-smart-people-who-give-a-shit-use-tools",
+    "title": "Smart people who give a shit use tools",
+    "expected": "not-ai"
+  },
+  {
+    "url": "https://jayd.ml/2026/11/14/rockbox-on-yp3.html",
+    "title": "Porting Rockbox to an undocumented $9 Aliexpress 'YP3' MP3 Player with LLMs",
+    "expected": "ai"
+  },
+  {
+    "url": "https://www.reddit.com/r/singularity/comments/1y59ef1/rumor_that_openai_or_anthropic_found_a_way_to/",
+    "title": "Rumors swirling that labs might have cracked Factoring in P",
+    "expected": "ai"
+  },
+  {
+    "url": "https://www.intruder.io/research/taking-over-us-treasury-subdomains-for-3-each",
+    "title": "Taking over US Treasury subdomains for $3 each",
+    "expected": "not-ai"
+  },
+  {
+    "url": "https://www.marginalia.nu/log/a_141_marginalia_update/",
+    "title": "Marginalia Search, Money, C++, Rust, AI, Stuff",
+    "expected": "ai"
+  },
+  {
+    "url": "https://dominicroye.github.io/shapes-of-rivers/",
+    "title": "The Shapes of Rivers",
+    "expected": "not-ai"
+  },
+  {
+    "url": "https://www.proofatlas.ai/open-problems/",
+    "title": "Top open problems in mathematics ranked by LLM-assessed importance",
+    "expected": "ai"
+  },
+  {
+    "url": "https://engram.com/blog/lora-size",
+    "title": "Predicting LoRA size for any dataset",
+    "expected": "ai"
+  },
+  {
+    "url": "https://noahbuilt.it/writing/qwen-on-5600-lambdas",
+    "title": "Serving Qwen via AWS Lambdas for fun and 80x negative profit",
+    "expected": "ai"
+  },
+  {
+    "url": "https://atilloy.com/2026/11/16/the-short-age-of-dragon-riders/",
+    "title": "The short age of dragon riders",
+    "expected": "not-ai"
+  },
+  {
+    "url": "https://antcating.github.io/2026/11/23/getting-old-java-phones-online-again.html",
+    "title": "Getting old Java phones online again",
+    "expected": "not-ai"
+  }
+]

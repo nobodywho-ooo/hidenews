@@ -3,14 +3,16 @@
 
 export const MODEL_PATH = "hf://ggml-org/Laya-GGUF/Laya-Q8_0.gguf";
 
-// 2-option *choice* (ai / not_ai). Tuned on the labelled suite; matches the
-// old 3-option prompt's best F1 without its extra "AI-adjacent" state (see
-// tune/prompt.mjs, HIDE_AI_PROMPT_CHOICE2). The second option's negative list
-// is what keeps generic software/hardware/science stories out.
+// 2-option *choice* (ai / not_ai), tuned on the 14-day labelled suite
+// (test-suite/cases, 420 stories). The instructions are phrased as a question
+// rather than "Classify this story's subject": that beat every other phrasing
+// on the expanded suite (best F1 0.633 vs 0.617). The negative description's
+// domain list is what keeps generic software/hardware/science stories out.
+// See tune/prompt.mjs (HIDE_AI_PROMPT_CHOICE2) and tune/README.md.
 export const PROMPT = {
   is_ai: {
     type: "choice" as const,
-    instructions: "Classify this story's subject.",
+    instructions: "Is this story about AI or LLMs?",
     criteria: {
       ai: "AI/LLM technology or AI companies",
       not_ai:
@@ -21,12 +23,11 @@ export const PROMPT = {
 
 export const AI_CHOICE_KEY = "ai";
 
-// Chosen by sweeping the labelled suite (test-suite/cases) with the title-only
-// input the extension actually sends. Laya uses a warmer fitted temperature for
-// two options than for three, so the cutoff sits lower than before: 0.43 catches
-// 12/23 AI stories while hiding 2/67 non-AI ones. 0.50 is a more conservative
-// alternative (9/23 caught, 1/67 hidden); 0.40 hides 3/67 for the same 12/23.
-export const DEFAULT_THRESHOLD = 0.43;
+// Chosen by sweeping the labelled suite with the title-only input the extension
+// actually sends. 0.50 hides 39 of 131 AI stories while hiding only 3 of 289
+// non-AI ones (93% precision, ~0.2 false positives per 30-story page). 0.45 is
+// the looser alternative (44 AI, 7 non-AI); 0.40 hides 51 AI for 9 non-AI.
+export const DEFAULT_THRESHOLD = 0.5;
 
 // The inference worker bundle, at the root of the built extension.
 export const HOST_WORKER = "host-worker.js";
