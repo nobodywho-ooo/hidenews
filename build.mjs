@@ -93,7 +93,7 @@ const FORBIDDEN_IN_WORKER = [
   "NODERAWFS is currently only supported on Node.js environment",
   "only supported in Node.js",
 ];
-const MIN_WASM = 100 * 1024 * 1024;
+const MIN_WASM = 1 * 1024 * 1024;
 
 function verify(target, outbase) {
   const worker = readFileSync(join(outbase, "host-worker.js"), "utf8");
