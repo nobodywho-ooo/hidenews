@@ -33,10 +33,8 @@ function buildTestExtension() {
   mkdirSync(EX_DIR, { recursive: true });
   const m = JSON.parse(readFileSync(join(root, "manifest.json"), "utf8"));
   m.content_scripts = [
-    { matches: ["*://news.ycombinator.com/*", `http://127.0.0.1:${FIXTURE_PORT}/*`], js: ["dist/content.js"], run_at: "document_start", all_frames: false },
+    { matches: ["*://news.ycombinator.com/*", `http://127.0.0.1:${FIXTURE_PORT}/*`], js: ["dist/content.js"], run_at: "document_idle" },
   ];
-  // enable browser console logging in the test profile if it already exists
-  m.content_scripts[0].all_frames = false;
   writeFileSync(join(EX_DIR, "manifest.json"), JSON.stringify(m, null, 2));
   // Real copy — Firefox's temporary add-on loader won't follow a symlinked dist.
   cpSync(join(root, "dist"), join(EX_DIR, "dist"), { recursive: true });
@@ -76,7 +74,6 @@ test(
       console.log("[test] navigated to fixture");
 
       // 1) confirm the content script actually injected on the fixture
-  mkdirSync(FF_PROFILE, { recursive: true });
       await driver.wait(
         async () =>
           (await driver.executeScript("return document.documentElement.dataset.hidenewsCt || ''")) === "loaded",
@@ -102,7 +99,7 @@ test(
       console.log(`[test] model status after ${((Date.now() - t0) / 1000).toFixed(0)}s: ${status}`);
       assert.equal(status, "ready", "model never became ready");
 
-      // wait for the two known rows to get verdicts
+      // 3) wait for the four known rows to get verdicts
       const want = { "1001": "hidden", "1002": "visible", "1003": "hidden", "1004": "visible" };
       await driver.wait(
         async () =>

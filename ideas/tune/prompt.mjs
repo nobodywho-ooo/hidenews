@@ -1,5 +1,5 @@
-// The Laya classification prompt. Shared between the tuning scripts and
-// (later) the extension itself, so what we tune is what ships.
+// Laya prompt variants explored during tuning. The winner (HIDE_AI_PROMPT) is
+// mirrored in src/shared/config.ts (PROMPT) — keep the two in sync.
 
 // Baseline terse prompt (best separation observed so far).
 export const HIDE_AI_PROMPT_SIMPLE = {

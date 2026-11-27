@@ -1,5 +1,5 @@
-// Build the MV3 extension with esbuild: bundle each entry, copy static
-// assets (offscreen.html, popup.html/css, the nobodywho wasm binary).
+// Build the MV3 extension with esbuild into dist/: bundle each entry and copy
+// the static assets (popup.html/css, the nobodywho wasm binary).
 import { build, context } from "esbuild";
 import { cpSync, mkdirSync, readFileSync, rmSync, statSync } from "node:fs";
 import { dirname, join } from "node:path";
@@ -9,9 +9,8 @@ const root = dirname(fileURLToPath(import.meta.url));
 const outbase = join(root, "dist");
 const watch = process.argv.includes("--watch");
 
-// Resolve nobodywho straight from its repo (a sibling of the project) rather
-// than via the `file:` node_modules symlink, which is relative and breaks when
-// this project (or node_modules) moves.
+// nobodywho is resolved straight from its repo checkout, a sibling of this one
+// (../nobodywho), rather than through node_modules.
 const NW = join(root, "..", "nobodywho", "nobodywho", "js");
 const NW_ENTRY = join(NW, "dist", "index.mjs");
 const NW_WASM = join(NW, "dist", "nobodywho_minimal.wasm");
@@ -72,8 +71,8 @@ async function main() {
 }
 
 // Sanity gates so a regression can never silently reach the browser:
-// 1) the page bundle must not contain node-FS raw-fs glue (e.g. the
-//    NODERAWFS throw), and 2) the copied wasm must actually be non-trivial.
+// 1) the worker bundle must not contain node-only FS glue (the NODERAWFS
+//    throw), and 2) the copied wasm must actually be non-trivial.
 const FORBIDDEN_IN_PAGE_BUNDLE = [
   "NODERAWFS is currently only supported on Node.js environment",
   "only supported in the Node.js environment",
@@ -84,7 +83,7 @@ function verify() {
   const bundle = readFileSync(join(outbase, "host-worker.js"), "utf8");
   for (const s of FORBIDDEN_IN_PAGE_BUNDLE) {
     if (bundle.includes(s)) {
-      throw new Error(`build guard: offscreen bundle contains node-only FS glue (${JSON.stringify(s)}). Aborting.`);
+      throw new Error(`build guard: worker bundle contains node-only FS glue (${JSON.stringify(s)}). Aborting.`);
     }
   }
   const wasm = join(outbase, "nobodywho_minimal.wasm");

@@ -3,21 +3,29 @@
   "name": "hidenews — de-AI your Hacker News",
   "version": "0.1.0",
   "description": "Filter Hacker News stories by whether they're about AI/LLMs, using an on-device Laya decision model.",
-  "permissions": ["storage"],
+  "permissions": [
+    "storage"
+  ],
   "host_permissions": [
     "https://huggingface.co/*",
     "https://*.huggingface.co/*"
   ],
   "background": {
-    "scripts": ["dist/background.js"]
+    "scripts": [
+      "dist/background.js"
+    ]
   },
   "content_security_policy": {
     "extension_pages": "script-src 'self' 'wasm-unsafe-eval'; object-src 'self'"
   },
   "content_scripts": [
     {
-      "matches": ["*://news.ycombinator.com/*"],
-      "js": ["dist/content.js"],
+      "matches": [
+        "*://news.ycombinator.com/*"
+      ],
+      "js": [
+        "dist/content.js"
+      ],
       "run_at": "document_idle"
     }
   ],
@@ -25,7 +33,6 @@
     "default_popup": "dist/popup/popup.html",
     "default_title": "hidenews"
   },
-  "icons": {},
   "browser_specific_settings": {
     "gecko": {
       "id": "hidenews@example.com"

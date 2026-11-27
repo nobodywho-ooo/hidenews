@@ -26,11 +26,6 @@ export const MODES = {
 } as const;
 export type Mode = (typeof MODES)[keyof typeof MODES];
 
-export const DEFAULT_SETTINGS = {
-  mode: MODES.HIDE_AI as Mode,
-  threshold: DEFAULT_THRESHOLD,
-};
-
 // Version-stamp the verdict cache so that changing the model/prompt/threshold
 // (or upgrading the extension) silently invalidates stale verdicts instead of
 // serving results computed by an old configuration.

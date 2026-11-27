@@ -1,67 +1,71 @@
-# hidenews extension
+# hidenews
 
-Filters Hacker News story rows by whether they're about AI/LLMs, using an
-on-device Laya decision model (nobodywho, WASM, no cloud).
+A browser extension (MV3, Firefox first) that marks Hacker News stories about
+AI/LLMs, using the [Laya](https://huggingface.co/ggml-org/Laya-GGUF) decision
+model running fully on-device via nobodywho
+(WebAssembly — no server, no cloud).
+
+## Layout
+
+```
+manifest.json        extension manifest (loads dist/)
+build.mjs            esbuild → dist/
+src/
+  background.ts      queue, verdict cache, worker pool
+  host-worker.ts     inference worker (nobodywho + Laya)
+  content.ts         HN page: declares stories, styles rows
+  popup/             settings + model status
+  shared/config.ts   model, prompt, threshold, cache versioning
+tests/               static bundle checks + headless-Firefox test
+ideas/               model tuning: test suite, HN snapshots, scripts
+```
 
 ## Build
 
+Requires a checkout of nobodywho next to this repo (`../nobodywho`) with its
+wasm already built (`nobodywho/js/dist/nobodywho_minimal.wasm`, ~366 MB;
+`cd ../nobodywho/nobodywho/js && npm run wasm`).
+
 ```bash
-cd .  # repo root
 npm install
-npm run build        # → dist/
+npm run build        # → dist/   (npm run watch to rebuild on change)
+npm run typecheck
+npm test             # static checks on dist/
+npm run test:browser # end-to-end in headless Firefox (geckodriver + Firefox.app)
 ```
 
-Prereqs: the nobodywho WASM build already exists (`nobodywho/nobodywho/js/dist/nobodywho_minimal.wasm`).
-To rebuild it from the `fetch` branch: `cd nobodywho/nobodywho/js && npm run wasm` (this is the ~366 MB
-full build; keep it in sync with `build.mjs`).
+## Load it
 
-The build copies that wasm next to the offscreen bundle and bundles:
-- `dist/background.js` — creates the offscreen host on startup
-- `dist/content.js` — HN row parsing + progressive blur/tint/hide
-- `dist/offscreen/offscreen.{html,js,wasm}` — the inference host (Laya via nobodywho)
-- `dist/popup/popup.{html,js,css}` — settings
+**Firefox**: `about:debugging#/runtime/this-firefox` → *Load Temporary Add-on* →
+`manifest.json`. After a rebuild, *Remove* and re-load rather than *Reload*, so
+the ~366 MB wasm isn't served stale. The first run downloads the model (~450 MB,
+`hf://ggml-org/Laya-GGUF/Laya-Q8_0.gguf`) into IndexedDB.
 
-## Load locally (unpacked)
+**Chrome/Edge**: not yet supported (the manifest uses an event-page background).
 
-**Firefox** (current target): `about:debugging#/runtime/this-firefox` → "Load Temporary Add-on" → pick
-`manifest.json`. Model download (~450 MB) starts on first host creation, then filtering is live.
+## How it works
 
-**Chrome/Edge**: `chrome://extensions` → enable Developer mode → "Load unpacked" → pick the repo root (this folder).
+- **Content script** marks each story row pending (blurred) and, over a
+  long-lived Port, declares the stories it still needs — on load, on DOM
+  changes and every 2 s. Rows are tinted green→red by P(ai) as verdicts arrive;
+  in *Hide AI* mode, AI rows are tinted red (in *Only AI* mode, non-AI rows).
+  Nothing is removed, so the page never reflows.
+- **Background** answers cached stories immediately and queues the rest
+  newest-declaration-first, so the top of the page you're looking at goes
+  first. A story nobody has re-declared for 5 s is dropped, so navigating away
+  stops its work. Verdicts are cached in `storage.local`, keyed by a hash of
+  model + prompt + threshold so config changes invalidate them.
+- **Workers** (up to 8, spawned one at a time while there's a backlog) each load
+  the model and classify one title at a time (~1.5 s each, single-threaded wasm).
+  Each worker holds its own copy of the model: lower `MAX_WORKERS` in
+  `src/background.ts` if memory is a concern.
 
-## How it behaves
+The question is a 3-option `choice` (ai / ai-adjacent / not-ai); a story counts
+as AI when P(ai) ≥ threshold (default 0.5, adjustable in the popup). It's defined
+in `src/shared/config.ts`, mirrored from `ideas/tune/prompt.mjs`.
 
-- First visit shows rows grayed/blurred while they're classified; each row then gets a
-  background tint from green (not AI) to red (AI), proportional to P(ai).
-- In **Hide AI** mode, AI rows are blurred/dimmed but **keep their space** (no reflow).
-  In **Only AI** mode, non-AI rows are blurred/dimmed instead.
-- Verdicts are keyed by HN story id and cached in `chrome.storage.session`, so revisits are instant
-  (fresh stories cost ~0.7 s each on the single-threaded WASM build).
+## Tuning
 
-## Settings (popup)
-
-- Mode: Hide AI (default) / Only AI.
-- Cutoff slider: a story counts as AI when `P(ai) >= threshold` (default 0.5).
-- Model status + download progress.
-
-## Model + prompt
-
-Question = 3-option `choice` (ai / ai-adjacent / not_ai), threshold 0.5 — identical to
-`ideas/tune/prompt.mjs`. Change it in `src/shared/config.ts` and rebuild.
-
-## Reloading after a rebuild (avoid stale artifacts)
-
-Firefox's "Reload" on a temporary add-on can keep serving old pages/resources
-(especially the ~366 MB wasm). After `npm run build`, do a **clean re-load**:
-`about:debugging#/runtime/this-firefox` → **Remove** the add-on → close any leftover
-*hidenews inference host* tab → **Load Temporary Add-on** → `manifest.json`.
-`npm run build` also wipes `dist/` first and runs a build guard that fails if the
-offscreen bundle ever contains node-only FS glue (e.g. a `NODERAWFS` throw), so a
-regression breaks at build time instead of silently at runtime.
-
-## Notes
-
-- MV3 extension pages block WebAssembly by default; the manifest whitelists it via
-  `"content_security_policy": { "extension_pages": "script-src 'self' 'wasm-unsafe-eval'; object-src 'self'" }`.
-- Host: Chrome uses `chrome.offscreen.createDocument`; Firefox opens the page in a hidden tab.
-- Needs the current HN markup (`tr.athing` / `span.titleline`). `MutationObserver` handles pagination.
-- Model downloads (~450 MB) into IndexedDB on first run; verdicts are cached in `storage.session`.
+See [`ideas/test-suite/README.md`](ideas/test-suite/README.md): hand-labelled
+front pages in `ideas/test-suite/cases/`, snapshots and predictions in
+`ideas/test-data/`, scripts in `ideas/tune/`.
