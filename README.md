@@ -1,4 +1,4 @@
-# hidenews
+# Hide News
 
 A browser extension that hides Hacker News stories about AI/LLMs.
 
