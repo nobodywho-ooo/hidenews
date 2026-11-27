@@ -137,8 +137,17 @@ export const HIDE_AI_PROMPT_CHOICE2 = {
   },
 };
 
+// Rejected: naming a pile of AI companies/products/terms in the criteria
+// (OpenAI, Anthropic, Nvidia, OpenRouter, Perplexity, GPUs, ...). Intuition says
+// an explicit vocabulary should catch AI business news and cryptic model
+// releases, but it measurably hurts on the 14-day suite: best F1 0.581-0.606 vs
+// 0.633 for the short criteria below, and AUC drops from 0.785 to 0.753. Long
+// criteria also cost ~70% more inference time (596 s vs 352 s for 420 stories),
+// because the description tokens are part of the prompt. Don't re-add term lists.
+//
 // Rejected: a 3-option *choice* with an explicit AI-adjacent bucket. It also
-// reached F1 0.649, but only by adding a state the extension never uses.
+// reached F1 0.649 on the 3-day suite, but only by adding a state the extension
+// never uses, and it scored worse on the 14-day suite (0.584).
 export const HIDE_AI_PROMPT_CHOICE3 = {
   is_ai: {
     type: "choice",
